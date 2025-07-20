@@ -52,13 +52,13 @@ interface ListModifiedDataType {
 }
 
 
-// readfileSpbb();
+readfileSpbb();
 // transformDataListNoPili_1()
+// readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv');
 
 
 
 
-//TODO:
 async function readfileSpbb() {
   const workbook = new ExcelJS.Workbook();
   const path = 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - PJ.xlsx'
@@ -92,21 +92,40 @@ async function readfileSpbb() {
     }
   });
 
-  let listModifiedData: ListModifiedDataType[] = [];
-
-  listModifiedData = data
-    .map((item) => ({
-      no_pili: item.pili_num_combine.result,
-      latitude: item.latitud,
-      longitude: item.longitud,
-    }))
-    .filter((item: any) => !Boolean(item.no_pili?.error))
-
-  // console.log(data);
-  await exportToCsvSppb(listModifiedData);
+  let listModifiedData_1: any[] = [];
+  const listPili_1 = await readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv');
+  listModifiedData_1 = data
+    .filter((item) => {
+      return listPili_1.some(itemInside =>
+        itemInside.no_pili.trim() === `${item.station_code}-${item.zon}-${item.no_pili}`
+      );
+    });
+  console.log(listModifiedData_1.length, listPili_1.length);
+  // await exportResultToCSV(listModifiedData_1, 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/result/result-list-pili-2.csv');
 
 
 }
+
+
+async function exportResultToCSV(listData: any, exportPath: string) {
+  // Create a new workbook for the export
+  const exportWorkbook = new ExcelJS.Workbook();
+  const exportWorksheet = exportWorkbook.addWorksheet('Modified Data');
+
+  const headers = Object.keys(listData[0]);
+  exportWorksheet.addRow(headers);
+
+  // Add data rows
+  listData.forEach((item: any) => {
+    // exportWorksheet.addRow(item);
+    const row = headers.map(header => item[header]);
+    exportWorksheet.addRow(row);
+  });
+
+  // Save as CSV file
+  await exportWorkbook.csv.writeFile(exportPath);
+}
+
 
 async function exportToCsvSppb(
   listModifiedData: ListModifiedDataType[]
@@ -137,6 +156,39 @@ async function exportToCsvSppb(
 }
 
 
+async function readCSVListNoPili(
+  path: string
+): Promise<{
+  no_pili: string
+}[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.csv.readFile(path);
+
+  const worksheet = workbook.getWorksheet(1);
+
+  const listData: any = [];
+  let headers: any = [];
+
+  worksheet?.eachRow((row: any, rowNumber) => {
+    if (rowNumber === 1) {
+      // Store headers
+      headers = row.values.slice(1); // slice(1) to remove undefined first element
+    } else {
+      // Process data rows
+      const rowData: any = {};
+      const values = row.values.slice(1); // slice(1) to remove undefined first element
+
+      headers.forEach((header: any, index: number) => {
+        rowData[header] = values[index];
+      });
+
+      listData.push(rowData);
+    }
+  });
+
+  return listData;
+
+}
 
 
 // async function transformDataListNoPili_1() {
@@ -201,3 +253,5 @@ async function exportToCsvSppb(
 //   await exportWorkbook.csv.writeFile(csvPath);
 
 // }
+
+
