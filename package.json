@@ -1,6 +1,6 @@
 {
   "name": "nodejs-typescript-template",
-  "version": "1.514.0",
+  "version": "1.516.0",
   "description": "A template for a nodejs application, using typescript",
   "main": "dist/src/index.js",
   "author": "",
@@ -21,12 +21,12 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.0.14",
+    "@types/node": "^24.0.15",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "eslint": "^9.31.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-prettier": "^5.5.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
     "jest": "^30.0.4",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
