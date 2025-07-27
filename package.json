@@ -16,12 +16,14 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "dotenv": "^17.2.0",
-    "exceljs": "^4.4.0"
+    "dotenv": "^17.2.1",
+    "exceljs": "^4.4.0",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.15",
+    "@types/pg": "^8.15.4",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "eslint": "^9.31.0",

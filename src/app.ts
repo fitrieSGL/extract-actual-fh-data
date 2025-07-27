@@ -1,3 +1,4 @@
+import { getCompoundData } from './db/db';
 import * as ExcelJS from 'exceljs';
 
 interface FHDataType {
@@ -52,8 +53,9 @@ interface ListModifiedDataType {
 }
 
 
+getCompoundData();
 // readfileSpbb();
-transformDataRaw();
+// transformDataRaw();
 // readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv');
 
 
