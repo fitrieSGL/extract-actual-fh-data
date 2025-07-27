@@ -52,8 +52,8 @@ interface ListModifiedDataType {
 }
 
 
-readfileSpbb();
-// transformDataListNoPili_1()
+// readfileSpbb();
+transformDataRaw();
 // readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv');
 
 
@@ -92,19 +92,16 @@ async function readfileSpbb() {
     }
   });
 
-  let listModifiedData_1: any[] = [];
-  const listPili_1 = await readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv');
-  listModifiedData_1 = data
-    .filter((item) => {
-      return listPili_1.some(itemInside =>
-        itemInside.no_pili.trim() === `${item.station_code}-${item.zon}-${item.no_pili}`
-      );
-    });
-  console.log(listModifiedData_1.length, listPili_1.length);
+
+  // let listModifiedData_1: any[] = [];
+  // const listPili_1 = await readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/extracted/bbp-p14.csv');
+
+  // console.log(listModifiedData_1.length, listPili_1.length);
   // await exportResultToCSV(listModifiedData_1, 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/result/result-list-pili-2.csv');
-
-
 }
+
+
+
 
 
 async function exportResultToCSV(listData: any, exportPath: string) {
@@ -155,12 +152,9 @@ async function exportToCsvSppb(
   await exportWorkbook.csv.writeFile(csvPath);
 }
 
-
 async function readCSVListNoPili(
   path: string
-): Promise<{
-  no_pili: string
-}[]> {
+): Promise<any[]> {
   const workbook = new ExcelJS.Workbook();
   await workbook.csv.readFile(path);
 
@@ -190,68 +184,27 @@ async function readCSVListNoPili(
 
 }
 
+async function transformDataRaw() {
+  const listDataAll = await readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/extracted-sppb-pj.csv');
+  // console.log(listDataAll);
 
-// async function transformDataListNoPili_1() {
-//   const workbook = new ExcelJS.Workbook();
-//   await workbook.csv.readFile('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/raw-list-no-pili-1.csv');
+  const listData = await readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/extracted/bbp-p7.csv');
+  const modifiedListData = listData.map(item => {
+    const matchingItem = listDataAll.find(itemInside => itemInside.no_pili === item.no_pili);
+    if (matchingItem) {
+      return {
+        ...item,
+        latitude: matchingItem.latitude,
+        longitude: matchingItem.longitude,
+      };
+    }
+    return item;
+  });
 
-//   const worksheet = workbook.getWorksheet(1);
-
-//   const listData: any = [];
-//   let headers: any = [];
-
-//   worksheet?.eachRow((row: any, rowNumber) => {
-//     if (rowNumber === 1) {
-//       // Store headers
-//       headers = row.values.slice(1); // slice(1) to remove undefined first element
-//     } else {
-//       // Process data rows
-//       const rowData: any = {};
-//       const values = row.values.slice(1); // slice(1) to remove undefined first element
-
-//       headers.forEach((header: any, index: number) => {
-//         rowData[header] = values[index];
-//       });
-
-//       listData.push(rowData);
-//     }
-//   });
-
-//   // console.log(listData);
-
-//   const modifiedListData = listData
-//   .map((item: any) => {
-//     return item.no_pili.trim();
-//   })
-//   .map((item: any) => {
-//     const listItem = item.split(" ");
-//     return `PJY-${listItem[0]}-${listItem[1]}`
-//   });
-
-//   // console.log(modifiedListData);
+  // console.log("modifiedListData: ", modifiedListData);
+  // await exportResultToCSV(modifiedListData, 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/result/bbp-p7.csv')
 
 
-//   //* Export CSV modified data
-//   // Create a new workbook for the export
-//   const exportWorkbook = new ExcelJS.Workbook();
-//   const exportWorksheet = exportWorkbook.addWorksheet('Modified Data');
-
-//   // Add headers
-//   exportWorksheet.columns = [
-//     { header: 'no_pili', key: 'no_pili', width: 15 },
-//   ];
-
-//   // Add data rows
-//   modifiedListData.forEach((item: any) => {
-//     exportWorksheet.addRow({
-//       no_pili: item,
-//     });
-//   });
-
-//   // Save as CSV file
-//   const csvPath = 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv';
-//   await exportWorkbook.csv.writeFile(csvPath);
-
-// }
+}
 
 
