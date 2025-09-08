@@ -4,7 +4,7 @@ import * as ExcelJS from 'exceljs';
 
 export async function readExcelAndInsertToDb() {
     const workbook = new ExcelJS.Workbook();
-    const path = 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/result/bbp-p14.csv';
+    const path = 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/result/bbp-p7.csv';
 
     // Use csv.readFile instead of xlsx.readFile
     await workbook.csv.readFile(path);
@@ -52,40 +52,40 @@ export async function readExcelAndInsertToDb() {
 
     // console.log("Data: ", data[0]);
 
-    // for (let i of data) {
-    //     let fhTypeId: string = "";
-    //     let fhOwnershipId: string = "";
-    //     if(i.pili_awam_ph){
-    //         fhTypeId = '1';
-    //         fhOwnershipId = '1';
-    //     }
-    //     if(i.pili_awam_gh){
-    //         fhTypeId = '2';
-    //         fhOwnershipId = '1';
-    //     }
-    //     if(i.pili_swasta_ph){
-    //         fhTypeId = '1';
-    //         fhOwnershipId = '2';
-    //     }
-    //     if(i.pili_swasta_gh){
-    //         fhTypeId = '2';
-    //         fhOwnershipId = '2';
-    //     }
+    for (let i of data) {
+        let fhTypeId: string = "";
+        let fhOwnershipId: string = "";
+        if(i.pili_awam_ph){
+            fhTypeId = '1';
+            fhOwnershipId = '1';
+        }
+        if(i.pili_awam_gh){
+            fhTypeId = '2';
+            fhOwnershipId = '1';
+        }
+        if(i.pili_swasta_ph){
+            fhTypeId = '1';
+            fhOwnershipId = '2';
+        }
+        if(i.pili_swasta_gh){
+            fhTypeId = '2';
+            fhOwnershipId = '2';
+        }
 
         
-    //     await insertFirehydrant({
-    //         no_pili: i.no_pili,
-    //         code_pili: 'PJY',
-    //         address: i.alamat,
-    //         latitude: i.latitude,
-    //         longitude: i.longitude,
-    //         station_id: '377e968a-6303-4ce4-862d-daf0085ff189',
-    //         status_id: '1',
-    //         ownership_id: fhOwnershipId,
-    //         fhtype_id: fhTypeId,
-    //         created_by: '249'
-    //     });
-    // }
+        await insertFirehydrant({
+            no_pili: i.no_pili,
+            code_pili: 'PJY',
+            address: i.alamat,
+            latitude: i.latitude,
+            longitude: i.longitude,
+            station_id: '14e54cbf-55e5-4931-b0db-0bc1035ba3e6',
+            status_id: '1',
+            ownership_id: fhOwnershipId,
+            fhtype_id: fhTypeId,
+            created_by: '249'
+        });
+    }
 
     return data;
 }
