@@ -21,7 +21,7 @@ export function getCompoundData() {
     });
 }
 
-async function insertFirehydrant(payload: {
+export async function insertFirehydrant(payload: {
     no_pili: string, //* 3 Char, example: 001
     code_pili: string,
     address: string,
@@ -29,9 +29,9 @@ async function insertFirehydrant(payload: {
     longitude: number,
     station_id: string,
     status_id: string,
-    ownership_id: number,
-    fhtype_id: number,
-    created_by: number
+    ownership_id: string,
+    fhtype_id: string,
+    created_by: string
 }) {
     const {
         no_pili,
@@ -49,10 +49,41 @@ async function insertFirehydrant(payload: {
     try {
         // Step 1: Insert fire hydrant record using the retrieved station ID
         const insertQuery = `
-            INSERT INTO fire_hydrant (no_pili, code_pili, address, latitude, longitude, external_station_id, status_id, ownership_id, fhtype_id, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO fire_hydrant (
+                no_pili, 
+                code_pili, 
+                address, 
+                latitude, 
+                longitude, 
+                external_station_id, 
+                status_id, 
+                ownership_id, 
+                fhtype_id, 
+                created_by,
+                created_at,
+                is_has_industry_risk,
+                is_has_housing_risk,
+                is_has_school_risk
+            )
+            VALUES (
+                $1, 
+                $2, 
+                $3, 
+                $4, 
+                $5, 
+                $6, 
+                $7, 
+                $8, 
+                $9, 
+                $10,
+                NOW() AT TIME ZONE 'UTC',
+                FALSE,
+                FALSE,
+                FALSE
+            )
             RETURNING *
         `;
+
         const insertResult = await pool.query(insertQuery, [
             no_pili,
             code_pili,
