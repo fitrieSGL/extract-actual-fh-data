@@ -1,3 +1,4 @@
+import { readExcelAndInsertToDb } from './services/serviceOne';
 import { getCompoundData, insertFirehydrant } from './db/db';
 import * as ExcelJS from 'exceljs';
 
@@ -58,18 +59,9 @@ interface ListModifiedDataType {
 // transformDataRaw();
 // readCSVListNoPili('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/rawdata/list-no-pili-1.csv');
 
-insertFirehydrant({
-  no_pili: '001',
-  code_pili: 'PJY',
-  address: 'Test',
-  latitude: 2.914994,
-  longitude: 101.690698,
-  station_id: '14e54cbf-55e5-4931-b0db-0bc1035ba3e6',
-  status_id: '1',
-  ownership_id: '1',
-  fhtype_id: '1',
-  created_by: '249'
-});
+
+readExcelAndInsertToDb();
+
 
 
 
