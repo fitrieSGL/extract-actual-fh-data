@@ -33,6 +33,7 @@ export async function insertFirehydrant(payload: {
     ownership_id: string,
     fhtype_id: string,
     created_by: string
+    source_creation: "Add",
 }) {
     const {
         no_pili,
@@ -45,7 +46,8 @@ export async function insertFirehydrant(payload: {
         status_id,
         ownership_id,
         fhtype_id,
-        created_by
+        created_by,
+        source_creation,
     } = payload;
 
     try {
@@ -63,6 +65,7 @@ export async function insertFirehydrant(payload: {
                 ownership_id, 
                 fhtype_id, 
                 created_by,
+                source_creation,
                 created_at,
                 is_has_industry_risk,
                 is_has_housing_risk,
@@ -80,6 +83,7 @@ export async function insertFirehydrant(payload: {
                 $9, 
                 $10,
                 $11,
+                $12,
                 NOW() AT TIME ZONE 'UTC',
                 FALSE,
                 FALSE,
@@ -99,7 +103,9 @@ export async function insertFirehydrant(payload: {
             status_id,
             ownership_id,
             fhtype_id,
-            created_by
+            created_by,
+            source_creation,
+            //TODO: add installation_date, maybe
         ]);
 
         // Log the result or handle success

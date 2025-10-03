@@ -169,7 +169,7 @@ export async function readCSVAndInsertToDb(
     // console.log("Data: ", data);
 
     for (let i of data) {
-        const modifiedNoPili = `${i.station_code}-${i.zon}-${i.no_pili}`;
+        const modifiedNoPili = `${i.station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
         const STATION_TTDI_ID = '55ad334f-c65e-433c-8cf5-9807c9ae6490';
         const PARLIAMENT_SEGAMBUT_ID = 'f6105dcc-97e7-4488-8ad6-dd27a8a88d0a';
         const SYSTEM_ADMIN_ID = '249';
@@ -185,7 +185,8 @@ export async function readCSVAndInsertToDb(
             status_id: i.id_status_pili.toString(),
             ownership_id: i.id_pemilikan_pili.toString(),
             fhtype_id: i.id_jenis_pili.toString(),
-            created_by: SYSTEM_ADMIN_ID
+            created_by: SYSTEM_ADMIN_ID,
+            source_creation: "Add",
         });
     }
 
