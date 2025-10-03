@@ -170,8 +170,10 @@ export async function readCSVAndInsertToDb(
 
     for (let i of data) {
         const modifiedNoPili = `${i.station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
+        const STATE_KL_ID = '55c38deb-aae3-44c5-bfac-0bb919effec4';
         const STATION_TTDI_ID = '55ad334f-c65e-433c-8cf5-9807c9ae6490';
         const PARLIAMENT_SEGAMBUT_ID = 'f6105dcc-97e7-4488-8ad6-dd27a8a88d0a';
+        const ZONE_ID = getZoneId(i.zon)?.id?.toString() ?? null;
         const SYSTEM_ADMIN_ID = '249';
 
         await insertFirehydrant({
@@ -181,14 +183,27 @@ export async function readCSVAndInsertToDb(
             latitude: i.latitud,
             longitude: i.longitud,
             station_id: STATION_TTDI_ID,
+            state_id: STATE_KL_ID,
             parliament_id: PARLIAMENT_SEGAMBUT_ID,
+            zone_id: ZONE_ID,
             status_id: i.id_status_pili.toString(),
             ownership_id: i.id_pemilikan_pili.toString(),
             fhtype_id: i.id_jenis_pili.toString(),
             created_by: SYSTEM_ADMIN_ID,
             source_creation: "Add",
+            //TODO: add installation_date, maybe
         });
     }
 
     return data;
+}
+
+function getZoneId(alphabet: string) {
+    // Convert A-Z to 1-26
+    const id = alphabet.toUpperCase().charCodeAt(0) - 64;
+    
+    return {
+        id: id,
+        code: alphabet
+    };
 }
