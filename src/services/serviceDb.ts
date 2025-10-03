@@ -1,6 +1,44 @@
 import { insertFirehydrant } from '../db/db';
 import * as ExcelJS from 'exceljs';
 
+interface SPPBFhType {
+    id_pili: number;
+    hydrant_id_uuid: string;
+    station_id_uuid: string;
+    station_id: number;
+    station_code: string;
+    zon: string;
+    no_pili: number;
+    pili_num_combine: string;
+    alamat: string;
+    penanda_kawasan: string;
+    id_kedudukan: number;
+    kedudukan: string;
+    lokasi: string;
+    latitud: number;
+    longitud: number;
+    id_negeri: number;
+    state_id_uuid: string;
+    negeri: string;
+    id_daerah: number;
+    daerah: string;
+    id_pemilikan_pili: number;
+    pemilikan_pili: string;
+    id_status_pili: number;
+    status_pili: string;
+    diameter_pengeluaran: number;
+    id_jenis_pili: number;
+    jenis_pili: string;
+    id_parlimen: number;
+    parlimen: string;
+    tarikh_pili: string;
+    id_syarikat_air: number;
+    flag_migrasi: string;
+    id_bandar: number;
+    bandar: string;
+    city_id_uuid: string;
+}
+
 
 export async function readExcelAndInsertToDb() {
     const workbook = new ExcelJS.Workbook();
@@ -72,7 +110,7 @@ export async function readExcelAndInsertToDb() {
     //         fhOwnershipId = '2';
     //     }
 
-        
+
     //     await insertFirehydrant({
     //         no_pili: i.no_pili,
     //         code_pili: 'PJY',
@@ -86,6 +124,70 @@ export async function readExcelAndInsertToDb() {
     //         created_by: '249'
     //     });
     // }
+
+    return data;
+}
+
+
+export async function readCSVAndInsertToDb(
+    filePath: string
+) {
+    const workbook = new ExcelJS.Workbook();
+
+    // Use csv.readFile instead of xlsx.readFile
+    await workbook.csv.readFile(filePath);
+
+    // Get the first worksheet (CSV files create one worksheet)
+    const worksheet = workbook.getWorksheet(1);
+
+    const data: SPPBFhType[] = [];
+    let headers: any = [];
+
+    worksheet?.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) {
+            // First row as headers
+            row.eachCell((cell, colNumber) => {
+                headers[colNumber] = cell.value;
+            });
+        } else {
+            // Data rows
+            const rowData: any = {};
+            row.eachCell((cell, colNumber) => {
+                const header = headers[colNumber];
+                if (header) {
+                    rowData[header] = cell.value;
+                }
+            });
+
+            // Only add row if it has data
+            if (Object.keys(rowData).length > 0) {
+                data.push(rowData);
+            }
+        }
+    });
+
+    // console.log("Data: ", data);
+
+    for (let i of data) {
+        const modifiedNoPili = `${i.station_code}-${i.zon}-${i.no_pili}`;
+        const STATION_TTDI_ID = '55ad334f-c65e-433c-8cf5-9807c9ae6490';
+        const PARLIAMENT_SEGAMBUT_ID = 'f6105dcc-97e7-4488-8ad6-dd27a8a88d0a';
+        const SYSTEM_ADMIN_ID = '249';
+
+        await insertFirehydrant({
+            no_pili: modifiedNoPili,
+            code_pili: i.station_code,
+            address: i.alamat,
+            latitude: i.latitud,
+            longitude: i.longitud,
+            station_id: STATION_TTDI_ID,
+            parliament_id: PARLIAMENT_SEGAMBUT_ID,
+            status_id: i.id_status_pili.toString(),
+            ownership_id: i.id_pemilikan_pili.toString(),
+            fhtype_id: i.id_jenis_pili.toString(),
+            created_by: SYSTEM_ADMIN_ID
+        });
+    }
 
     return data;
 }

@@ -1,4 +1,4 @@
-import { readExcelAndInsertToDb } from './services/serviceDb';
+import { readExcelAndInsertToDb, readCSVAndInsertToDb } from './services/serviceDb';
 import { readfileSpbbExcelAndConvertToCSV } from './services/extractExcel';
 import { getCompoundData, insertFirehydrant } from './db/db';
 import * as ExcelJS from 'exceljs';
@@ -14,6 +14,7 @@ interface ListModifiedDataType {
 //* Run here
 // getCompoundData();
 // readExcelAndInsertToDb();
+// readCSVAndInsertToDb('C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-ttdi.csv');
 
 // readfileSpbbExcelAndConvertToCSV(
 //   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - KL.xlsx',
