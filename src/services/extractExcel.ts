@@ -44,11 +44,13 @@ interface FHDataType {
     latitud_original: string;
     longitud_original: string;
     no_pili_asal: number;
+    dun: string | null;
 }
 
 
 export async function readfileSpbbExcelAndConvertToCSV(
     filePath: string,
+    fileOutputPath: string,
     worksheetName: string
 ) {
     const workbook = new ExcelJS.Workbook();
@@ -82,10 +84,10 @@ export async function readfileSpbbExcelAndConvertToCSV(
         }
     });
 
-    const modifiedListData = data.filter(item => item.station_code === 'TDI');
+    const modifiedListData = data.filter(item => item.dun === 'Kota Anggerik');
     // console.log(modifiedListData);
 
-    await exportResultToCSV(modifiedListData, 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-ttdi.csv');
+    await exportResultToCSV(modifiedListData, fileOutputPath);
 }
 
 
