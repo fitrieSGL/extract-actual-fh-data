@@ -14,18 +14,19 @@ interface ListModifiedDataType {
 //* Run here
 // getCompoundData();
 // readExcelAndInsertToDb();
-// readCSVAndInsertToDb(
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kota-anggerik.csv',
-//   {
-//     state_id: 'b74645e5-3ad2-4dd9-ba72-3b7eb8f16643',
-//     station_id: '291e4a88-0bad-4a01-bfc2-9f505437436f',
-//     parliament_id: 'c90096b2-6756-4df2-ae0d-cde67bf6fb2b',
-//   }
-// );
+readCSVAndInsertToDb(
+  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl-jalan-hang-tuah.csv',
+  {
+    code_pili: 'JHT',
+    state_id: '55c38deb-aae3-44c5-bfac-0bb919effec4',
+    station_id: 'e795beb3-2cda-4ac4-b79d-7953221f1fb6',
+    parliament_id: null as any,
+  }
+);
 
 // readfileSpbbExcelAndConvertToCSV(
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - SL.xlsx',
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kota-anggerik.csv',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - KL.xlsx',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl-jalan-hang-tuah.csv',
 //   'Pili'
 // );
 

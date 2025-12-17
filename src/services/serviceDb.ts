@@ -132,6 +132,7 @@ export async function readExcelAndInsertToDb() {
 export async function readCSVAndInsertToDb(
     filePath: string,
     payload: {
+        code_pili: string,
         state_id: string,
         station_id: string,
         parliament_id: string,
@@ -176,14 +177,14 @@ export async function readCSVAndInsertToDb(
 
     for (let i of data) {
         // const modifiedNoPili = `${i.station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
-        const modifiedNoPili = `BJG-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
+        const modifiedNoPili = `${payload.code_pili}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
         const ZONE_ID = getZoneId(i.zon)?.id?.toString() ?? null;
         const SYSTEM_ADMIN_ID = '249';
 
         await insertFirehydrant({
             no_pili: modifiedNoPili,
             // code_pili: i.station_code,
-            code_pili: "BJG",
+            code_pili: payload.code_pili,
             address: i.alamat,
             latitude: i.latitud,
             longitude: i.longitud,
