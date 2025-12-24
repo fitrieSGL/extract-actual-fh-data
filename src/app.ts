@@ -15,7 +15,7 @@ interface ListModifiedDataType {
 // getCompoundData();
 // readExcelAndInsertToDb();
 readCSVAndInsertToDb(
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl-jalan-hang-tuah.csv',
+  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl.csv',
   {
     state_id: '55c38deb-aae3-44c5-bfac-0bb919effec4',
     listExcludeStationCode: ['JHT', 'TDI', 'KLC'],

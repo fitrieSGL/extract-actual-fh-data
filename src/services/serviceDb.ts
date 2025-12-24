@@ -141,6 +141,7 @@ export async function readCSVAndInsertToDb(
     const workbook = new ExcelJS.Workbook();
 
     // Use csv.readFile instead of xlsx.readFile
+    console.log("Reading csv...");
     await workbook.csv.readFile(filePath);
 
     // Get the first worksheet (CSV files create one worksheet)
@@ -204,6 +205,10 @@ export async function readCSVAndInsertToDb(
     for (let i of data) {
         //* Get district
         const district = listDistrict.find(item => {
+            // console.log('daerah value:', i.daerah, 'type:', typeof i.daerah);
+            if (!i.daerah || typeof i.daerah !== 'string') {
+                return false;
+            }
             const itemWords = item.name.toLowerCase().split(' ');
             const daerahWords = i.daerah.toLowerCase().split(' ');
             // Count matching words
@@ -216,6 +221,9 @@ export async function readCSVAndInsertToDb(
 
         //* Get parliament
         const parliament = listParliament.find(item => {
+            if (!i.parlimen || typeof i.parlimen !== 'string') {
+                return false;
+            }
             const itemWords = item.name.toLowerCase().split(' ');
             const parliamentWords = i.parlimen.toLowerCase().split(' ');
             // Count matching words
@@ -228,7 +236,12 @@ export async function readCSVAndInsertToDb(
 
         //* Get station
         const station = listStation
-            .filter(item => !payload.listExcludeStationCode.includes(item.station_code))
+            .filter(item => {
+                if (!i.station_code || typeof i.station_code !== 'string') {
+                    return false;
+                }
+                return !payload.listExcludeStationCode.includes(item.station_code);
+            })
             .find(item => {
                 return item.station_code.includes(i.station_code);
             });
@@ -245,8 +258,9 @@ export async function readCSVAndInsertToDb(
         const ZONE_ID = getZoneId(i.zon)?.id?.toString() ?? null;
         const SYSTEM_ADMIN_ID = '249';
 
-        if(!station_id || !station_code){
-            throw new Error("station_id or station_code is null!");
+        if (!station_id || !station_code) {
+            // throw new Error("station_id or station_code is null!");
+            continue;
         }
 
         await insertFirehydrant({
@@ -259,9 +273,9 @@ export async function readCSVAndInsertToDb(
             state_id: payload.state_id,
             parliament_id,
             zone_id: ZONE_ID,
-            status_id: i.id_status_pili.toString(),
-            ownership_id: i.id_pemilikan_pili.toString(),
-            fhtype_id: i.id_jenis_pili.toString(),
+            status_id: i?.id_status_pili?.toString(),
+            ownership_id: i?.id_pemilikan_pili?.toString(),
+            fhtype_id: i?.id_jenis_pili?.toString(),
             created_by: SYSTEM_ADMIN_ID,
             source_creation: "Add",
             //TODO: add installation_date, maybe
