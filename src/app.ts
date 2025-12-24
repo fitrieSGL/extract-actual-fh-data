@@ -12,19 +12,17 @@ interface ListModifiedDataType {
 }
 
 //* Run here
-// getCompoundData();
-// readExcelAndInsertToDb();
 readCSVAndInsertToDb(
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl.csv',
+  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-selangor.csv',
   {
-    state_id: '55c38deb-aae3-44c5-bfac-0bb919effec4',
-    listExcludeStationCode: ['JHT', 'TDI', 'KLC'],
+    state_id: 'b74645e5-3ad2-4dd9-ba72-3b7eb8f16643',
+    listExcludeStationCode: ['CBY', 'BJG', 'BGI'],
   }
 );
 
 // readfileSpbbExcelAndConvertToCSV(
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - KL.xlsx',
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl.csv',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - SL.xlsx',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-selangor.csv',
 //   'Pili'
 // );
 

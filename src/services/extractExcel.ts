@@ -1,5 +1,6 @@
 import * as ExcelJS from 'exceljs';
-
+import * as fs from 'fs';
+import { stringify } from 'csv-stringify';
 
 interface FHDataType {
   id_pili: number;
@@ -48,6 +49,49 @@ interface FHDataType {
 }
 
 
+// export async function readfileSpbbExcelAndConvertToCSV(
+//   filePath: string,
+//   fileOutputPath: string,
+//   worksheetName: string
+// ) {
+//   const workbook = new ExcelJS.Workbook();
+//   await workbook.xlsx.readFile(filePath);
+
+//   const worksheet = workbook.getWorksheet(worksheetName);
+
+//   const data: FHDataType[] = [];
+//   let headers: any = [];
+
+//   worksheet?.eachRow((row, rowNumber) => {
+//     if (rowNumber === 1) {
+//       // First row as headers
+//       row.eachCell((cell, colNumber) => {
+//         headers[colNumber] = cell.value;
+//       });
+//     } else {
+//       // Data rows
+//       const rowData: any = {};
+//       row.eachCell((cell, colNumber) => {
+//         const header = headers[colNumber];
+//         if (header) {
+//           rowData[header] = cell.value;
+//         }
+//       });
+
+//       // Only add row if it has data
+//       if (Object.keys(rowData).length > 0) {
+//         data.push(rowData);
+//       }
+//     }
+//   });
+
+//   // const modifiedListData = data.filter(item => (item.station_code === 'JHT'));
+//   // const modifiedListData = data.filter(item => (item.dun === 'Kota Anggerik') && (item.station_id !== 11));
+//   // console.log(modifiedListData);
+
+//   await exportResultToCSV(data, fileOutputPath);
+// }
+
 export async function readfileSpbbExcelAndConvertToCSV(
   filePath: string,
   fileOutputPath: string,
@@ -58,17 +102,26 @@ export async function readfileSpbbExcelAndConvertToCSV(
 
   const worksheet = workbook.getWorksheet(worksheetName);
 
-  const data: FHDataType[] = [];
-  let headers: any = [];
+  if (!worksheet) {
+    throw new Error(`Worksheet "${worksheetName}" not found`);
+  }
 
-  worksheet?.eachRow((row, rowNumber) => {
+  // Create write stream
+  const writeStream = fs.createWriteStream(fileOutputPath);
+  const stringifier = stringify({ header: true });
+  stringifier.pipe(writeStream);
+
+  let headers: any = [];
+  let processedRows = 0;
+
+  worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) {
       // First row as headers
       row.eachCell((cell, colNumber) => {
         headers[colNumber] = cell.value;
       });
     } else {
-      // Data rows
+      // Data rows - stream directly instead of storing
       const rowData: any = {};
       row.eachCell((cell, colNumber) => {
         const header = headers[colNumber];
@@ -77,18 +130,29 @@ export async function readfileSpbbExcelAndConvertToCSV(
         }
       });
 
-      // Only add row if it has data
+      // Only write row if it has data
       if (Object.keys(rowData).length > 0) {
-        data.push(rowData);
+        stringifier.write(rowData);
+        processedRows++;
+
+        // Optional: log progress every 10,000 rows
+        if (processedRows % 10000 === 0) {
+          console.log(`Processed ${processedRows} rows...`);
+        }
       }
     }
   });
 
-  // const modifiedListData = data.filter(item => (item.station_code === 'JHT'));
-  // const modifiedListData = data.filter(item => (item.dun === 'Kota Anggerik') && (item.station_id !== 11));
-  // console.log(modifiedListData);
+  // Close the stream
+  stringifier.end();
 
-  await exportResultToCSV(data, fileOutputPath);
+  return new Promise((resolve, reject) => {
+    writeStream.on('finish', () => {
+      console.log(`✓ Completed: ${processedRows} rows written to ${fileOutputPath}`);
+      resolve(processedRows);
+    });
+    writeStream.on('error', reject);
+  });
 }
 
 
