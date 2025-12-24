@@ -84,11 +84,11 @@ export async function readfileSpbbExcelAndConvertToCSV(
     }
   });
 
-  const modifiedListData = data.filter(item => (item.station_code === 'JHT'));
+  // const modifiedListData = data.filter(item => (item.station_code === 'JHT'));
   // const modifiedListData = data.filter(item => (item.dun === 'Kota Anggerik') && (item.station_id !== 11));
   // console.log(modifiedListData);
 
-  await exportResultToCSV(modifiedListData, fileOutputPath);
+  await exportResultToCSV(data, fileOutputPath);
 }
 
 

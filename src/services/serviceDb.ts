@@ -135,6 +135,7 @@ export async function readCSVAndInsertToDb(
     filePath: string,
     payload: {
         state_id: string,
+        listExcludeStationCode: string[],
     },
 ) {
     const workbook = new ExcelJS.Workbook();
@@ -226,10 +227,8 @@ export async function readCSVAndInsertToDb(
         });
 
         //* Get station
-        // const listExcludeStationCode: string[] = [];
-        const listExcludeStationCode: string[] = ['JHT', 'TDI'];
         const station = listStation
-            .filter(item => !listExcludeStationCode.includes(item.station_code))
+            .filter(item => !payload.listExcludeStationCode.includes(item.station_code))
             .find(item => {
                 return item.station_code.includes(i.station_code);
             });
