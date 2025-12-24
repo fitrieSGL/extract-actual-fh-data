@@ -140,45 +140,23 @@ export async function readCSVAndInsertToDb(
 ) {
     const workbook = new ExcelJS.Workbook();
 
-    // Use csv.readFile instead of xlsx.readFile
     console.log("Reading csv...");
     await workbook.csv.readFile(filePath);
 
-    // Get the first worksheet (CSV files create one worksheet)
     const worksheet = workbook.getWorksheet(1);
 
-    const data: SPPBFhType[] = [];
-    let headers: any = [];
-
-    worksheet?.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-            // First row as headers
-            row.eachCell((cell, colNumber) => {
-                headers[colNumber] = cell.value;
-            });
-        } else {
-            // Data rows
-            const rowData: any = {};
-            row.eachCell((cell, colNumber) => {
-                const header = headers[colNumber];
-                if (header) {
-                    rowData[header] = cell.value;
-                }
-            });
-
-            // Only add row if it has data
-            if (Object.keys(rowData).length > 0) {
-                data.push(rowData);
-            }
-        }
-    });
+    if (!worksheet) {
+        throw new Error('Worksheet not found');
+    }
 
     const KL_STATE_ID = '55c38deb-aae3-44c5-bfac-0bb919effec4';
     const SELANGOR_STATE_ID = 'b74645e5-3ad2-4dd9-ba72-3b7eb8f16643';
     const PUTRAJAYA_STATE_ID = '09a53d0c-6993-4cfc-a9f0-3da42395ef59';
+
     let listDistrict: DistrictType[] = [];
     let listParliament: ParliamentType[] = [];
     let listStation: StationType[] = [];
+
     switch (payload.state_id) {
         case KL_STATE_ID: {
             listDistrict = await readCSVFile<DistrictType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/kl/districts.csv");
@@ -200,23 +178,50 @@ export async function readCSVAndInsertToDb(
         }
     }
 
+    let headers: any = [];
+    let processedRows = 0;
+    let insertedRows = 0;
+    let skippedRows = 0;
 
+    // Process rows one by one
+    for await (const row of worksheet.getRows(1, worksheet.rowCount) || []) {
+        const rowNumber = row.number;
 
-    for (let i of data) {
+        if (rowNumber === 1) {
+            // First row as headers
+            row.eachCell((cell, colNumber) => {
+                headers[colNumber] = cell.value;
+            });
+            continue;
+        }
+
+        // Data rows
+        const rowData: any = {};
+        row.eachCell((cell, colNumber) => {
+            const header = headers[colNumber];
+            if (header) {
+                rowData[header] = cell.value;
+            }
+        });
+
+        // Only process row if it has data
+        if (Object.keys(rowData).length === 0) {
+            continue;
+        }
+
+        const i = rowData;
+
         //* Get district
         const district = listDistrict.find(item => {
-            // console.log('daerah value:', i.daerah, 'type:', typeof i.daerah);
             if (!i.daerah || typeof i.daerah !== 'string') {
                 return false;
             }
             const itemWords = item.name.toLowerCase().split(' ');
             const daerahWords = i.daerah.toLowerCase().split(' ');
-            // Count matching words
             const matchingWords = itemWords.filter(word =>
                 daerahWords.includes(word)
             );
-            // Return true if at least 1 or 2 words match
-            return matchingWords.length >= 1; // Change to >= 2 if you want at least 2 matches
+            return matchingWords.length >= 1;
         });
 
         //* Get parliament
@@ -226,42 +231,50 @@ export async function readCSVAndInsertToDb(
             }
             const itemWords = item.name.toLowerCase().split(' ');
             const parliamentWords = i.parlimen.toLowerCase().split(' ');
-            // Count matching words
             const matchingWords = itemWords.filter(word =>
                 parliamentWords.includes(word)
             );
-            // Return true if at least 1 or 2 words match
-            return matchingWords.length >= 1; // Change to >= 2 if you want at least 2 matches
+            return matchingWords.length >= 1;
         });
 
         //* Get station
+        // Check if station_code exists first
+        if (!i.station_code || typeof i.station_code !== 'string') {
+            skippedRows++;
+            console.log(`Skipped row ${rowNumber}: Missing or invalid station_code`);
+            continue;
+        }
+
         const station = listStation
             .filter(item => {
-                if (!i.station_code || typeof i.station_code !== 'string') {
+                // Check if item.station_code exists before using it
+                if (!item.station_code || typeof item.station_code !== 'string') {
                     return false;
                 }
                 return !payload.listExcludeStationCode.includes(item.station_code);
             })
             .find(item => {
+                // Check again before calling includes
+                if (!item.station_code || typeof item.station_code !== 'string') {
+                    return false;
+                }
                 return item.station_code.includes(i.station_code);
             });
-
-        // console.log('District: ', district?.id ?? null);
-        // console.log('Parliament: ', parliament?.id ?? null);
-        // console.log('Station: ', station?.id ?? null);
 
         const district_id = district?.id ?? null;
         const parliament_id = parliament?.id ?? null;
         const station_id = station?.id ?? null;
         const station_code = station?.station_code ?? null;
+
+        if (!station_id || !station_code) {
+            skippedRows++;
+            console.log(`Skipped row ${rowNumber}: Station not found for code ${i.station_code}`);
+            continue;
+        }
+
         const modifiedNoPili = `${station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
         const ZONE_ID = getZoneId(i.zon)?.id?.toString() ?? null;
         const SYSTEM_ADMIN_ID = '249';
-
-        if (!station_id || !station_code) {
-            // throw new Error("station_id or station_code is null!");
-            continue;
-        }
 
         await insertFirehydrant({
             no_pili: modifiedNoPili,
@@ -278,12 +291,21 @@ export async function readCSVAndInsertToDb(
             fhtype_id: i?.id_jenis_pili?.toString(),
             created_by: SYSTEM_ADMIN_ID,
             source_creation: "Add",
-            //TODO: add installation_date, maybe
             district_id,
         });
+
+        insertedRows++;
+        processedRows++;
+
+        // Log progress every 1000 rows
+        if (processedRows % 1000 === 0) {
+            console.log(`Processed ${processedRows} rows (Inserted: ${insertedRows}, Skipped: ${skippedRows})...`);
+        }
     }
 
-    return data;
+    console.log(`✓ Completed: ${processedRows} total rows processed`);
+    console.log(`  - Inserted: ${insertedRows}`);
+    console.log(`  - Skipped: ${skippedRows}`);
 }
 
 function getZoneId(alphabet: string) {

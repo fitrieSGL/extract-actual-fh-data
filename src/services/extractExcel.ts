@@ -121,8 +121,17 @@ export async function readfileSpbbExcelAndConvertToCSV(
         headers[colNumber] = cell.value;
       });
     } else {
-      // Data rows - stream directly instead of storing
+      // Data rows - create rowData with all headers initialized to null
       const rowData: any = {};
+
+      // Initialize all headers with null
+      headers.forEach((header: any, index: number) => {
+        if (header) {
+          rowData[header] = null;
+        }
+      });
+
+      // Then fill in actual values
       row.eachCell((cell, colNumber) => {
         const header = headers[colNumber];
         if (header) {
@@ -130,15 +139,13 @@ export async function readfileSpbbExcelAndConvertToCSV(
         }
       });
 
-      // Only write row if it has data
-      if (Object.keys(rowData).length > 0) {
-        stringifier.write(rowData);
-        processedRows++;
+      // Write row (will include nulls for empty cells)
+      stringifier.write(rowData);
+      processedRows++;
 
-        // Optional: log progress every 10,000 rows
-        if (processedRows % 10000 === 0) {
-          console.log(`Processed ${processedRows} rows...`);
-        }
+      // Optional: log progress every 10,000 rows
+      if (processedRows % 10000 === 0) {
+        console.log(`Processed ${processedRows} rows...`);
       }
     }
   });
