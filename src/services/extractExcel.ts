@@ -2,93 +2,93 @@ import * as ExcelJS from 'exceljs';
 
 
 interface FHDataType {
-    id_pili: number;
-    hydrant_id_uuid: string;
-    station_id_uuid: string;
-    station_id: number;
-    station_code: string;
-    zon: string;
-    no_pili: string;
-    pili_num_combine: {
-        result: string;
-        sharedFormula: string;
-        error?: string,
-    };
-    alamat: string;
-    penanda_kawasan: string;
-    id_kedudukan: number;
-    kedudukan: string;
-    lokasi: string;
-    latitud: number;
-    longitud: number;
-    id_negeri: number;
-    state_id_uuid: string;
-    negeri: string;
-    id_daerah: number;
-    daerah: string;
-    id_pemilikan_pili: number;
-    pemilikan_pili: string;
-    id_status_pili: number;
-    status_pili: string;
-    diameter_pengeluaran: number;
-    id_jenis_pili: number;
-    jenis_pili: string;
-    id_parlimen: number;
-    parlimen: string;
-    tarikh_pili: string;
-    id_syarikat_air: number;
-    flag_migrasi: string;
-    id_bandar: number;
-    bandar: string;
-    city_id_uuid: string;
-    latitud_original: string;
-    longitud_original: string;
-    no_pili_asal: number;
-    dun: string | null;
+  id_pili: number;
+  hydrant_id_uuid: string;
+  station_id_uuid: string;
+  station_id: number;
+  station_code: string;
+  zon: string;
+  no_pili: string;
+  pili_num_combine: {
+    result: string;
+    sharedFormula: string;
+    error?: string,
+  };
+  alamat: string;
+  penanda_kawasan: string;
+  id_kedudukan: number;
+  kedudukan: string;
+  lokasi: string;
+  latitud: number;
+  longitud: number;
+  id_negeri: number;
+  state_id_uuid: string;
+  negeri: string;
+  id_daerah: number;
+  daerah: string;
+  id_pemilikan_pili: number;
+  pemilikan_pili: string;
+  id_status_pili: number;
+  status_pili: string;
+  diameter_pengeluaran: number;
+  id_jenis_pili: number;
+  jenis_pili: string;
+  id_parlimen: number;
+  parlimen: string;
+  tarikh_pili: string;
+  id_syarikat_air: number;
+  flag_migrasi: string;
+  id_bandar: number;
+  bandar: string;
+  city_id_uuid: string;
+  latitud_original: string;
+  longitud_original: string;
+  no_pili_asal: number;
+  dun: string | null;
 }
 
 
 export async function readfileSpbbExcelAndConvertToCSV(
-    filePath: string,
-    fileOutputPath: string,
-    worksheetName: string
+  filePath: string,
+  fileOutputPath: string,
+  worksheetName: string
 ) {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(filePath);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
 
-    const worksheet = workbook.getWorksheet(worksheetName);
+  const worksheet = workbook.getWorksheet(worksheetName);
 
-    const data: FHDataType[] = [];
-    let headers: any = [];
+  const data: FHDataType[] = [];
+  let headers: any = [];
 
-    worksheet?.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-            // First row as headers
-            row.eachCell((cell, colNumber) => {
-                headers[colNumber] = cell.value;
-            });
-        } else {
-            // Data rows
-            const rowData: any = {};
-            row.eachCell((cell, colNumber) => {
-                const header = headers[colNumber];
-                if (header) {
-                    rowData[header] = cell.value;
-                }
-            });
-
-            // Only add row if it has data
-            if (Object.keys(rowData).length > 0) {
-                data.push(rowData);
-            }
+  worksheet?.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) {
+      // First row as headers
+      row.eachCell((cell, colNumber) => {
+        headers[colNumber] = cell.value;
+      });
+    } else {
+      // Data rows
+      const rowData: any = {};
+      row.eachCell((cell, colNumber) => {
+        const header = headers[colNumber];
+        if (header) {
+          rowData[header] = cell.value;
         }
-    });
+      });
 
-    const modifiedListData = data.filter(item => (item.station_code === 'JHT'));
-    // const modifiedListData = data.filter(item => (item.dun === 'Kota Anggerik') && (item.station_id !== 11));
-    // console.log(modifiedListData);
+      // Only add row if it has data
+      if (Object.keys(rowData).length > 0) {
+        data.push(rowData);
+      }
+    }
+  });
 
-    await exportResultToCSV(modifiedListData, fileOutputPath);
+  const modifiedListData = data.filter(item => (item.station_code === 'JHT'));
+  // const modifiedListData = data.filter(item => (item.dun === 'Kota Anggerik') && (item.station_id !== 11));
+  // console.log(modifiedListData);
+
+  await exportResultToCSV(modifiedListData, fileOutputPath);
 }
 
 
@@ -137,22 +137,22 @@ export async function readfileSpbbExcelAndConvertToCSV(
 
 
 async function exportResultToCSV(listData: any, exportPath: string) {
-    // Create a new workbook for the export
-    const exportWorkbook = new ExcelJS.Workbook();
-    const exportWorksheet = exportWorkbook.addWorksheet('Modified Data');
+  // Create a new workbook for the export
+  const exportWorkbook = new ExcelJS.Workbook();
+  const exportWorksheet = exportWorkbook.addWorksheet('Modified Data');
 
-    const headers = Object.keys(listData[0]);
-    exportWorksheet.addRow(headers);
+  const headers = Object.keys(listData[0]);
+  exportWorksheet.addRow(headers);
 
-    // Add data rows
-    listData.forEach((item: any) => {
-        // exportWorksheet.addRow(item);
-        const row = headers.map(header => item[header]);
-        exportWorksheet.addRow(row);
-    });
+  // Add data rows
+  listData.forEach((item: any) => {
+    // exportWorksheet.addRow(item);
+    const row = headers.map(header => item[header]);
+    exportWorksheet.addRow(row);
+  });
 
-    // Save as CSV file
-    await exportWorkbook.csv.writeFile(exportPath);
+  // Save as CSV file
+  await exportWorkbook.csv.writeFile(exportPath);
 }
 
 
@@ -212,4 +212,41 @@ async function readCSVListNoPili(
 
   return listData;
 
+}
+
+
+
+
+export async function readCSVFile<T>(filePath: string) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.csv.readFile(filePath);
+  const worksheet = workbook.getWorksheet(1);
+
+  const data: T[] = [];
+  let headers: any = [];
+
+  worksheet?.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) {
+      // First row as headers
+      row.eachCell((cell, colNumber) => {
+        headers[colNumber] = cell.value;
+      });
+    } else {
+      // Data rows
+      const rowData: any = {};
+      row.eachCell((cell, colNumber) => {
+        const header = headers[colNumber];
+        if (header) {
+          rowData[header] = cell.value;
+        }
+      });
+
+      // Only add row if it has data
+      if (Object.keys(rowData).length > 0) {
+        data.push(rowData);
+      }
+    }
+  });
+
+  return data;
 }

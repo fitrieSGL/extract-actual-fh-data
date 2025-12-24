@@ -17,10 +17,7 @@ interface ListModifiedDataType {
 readCSVAndInsertToDb(
   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-kl-jalan-hang-tuah.csv',
   {
-    code_pili: 'JHT',
     state_id: '55c38deb-aae3-44c5-bfac-0bb919effec4',
-    station_id: 'e795beb3-2cda-4ac4-b79d-7953221f1fb6',
-    parliament_id: null as any,
   }
 );
 

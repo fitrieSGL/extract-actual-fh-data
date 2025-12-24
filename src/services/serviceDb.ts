@@ -1,4 +1,6 @@
+import { DistrictType, ParliamentType, StationType } from 'types/csv';
 import { insertFirehydrant } from '../db/db';
+import { readCSVFile } from '../services/extractExcel';
 import * as ExcelJS from 'exceljs';
 
 interface SPPBFhType {
@@ -132,12 +134,8 @@ export async function readExcelAndInsertToDb() {
 export async function readCSVAndInsertToDb(
     filePath: string,
     payload: {
-        code_pili: string,
         state_id: string,
-        station_id: string,
-        parliament_id: string,
-
-    }
+    },
 ) {
     const workbook = new ExcelJS.Workbook();
 
@@ -173,24 +171,94 @@ export async function readCSVAndInsertToDb(
         }
     });
 
-    // console.log("Data: ", data);
+    const KL_STATE_ID = '55c38deb-aae3-44c5-bfac-0bb919effec4';
+    const SELANGOR_STATE_ID = 'b74645e5-3ad2-4dd9-ba72-3b7eb8f16643';
+    const PUTRAJAYA_STATE_ID = '09a53d0c-6993-4cfc-a9f0-3da42395ef59';
+    let listDistrict: DistrictType[] = [];
+    let listParliament: ParliamentType[] = [];
+    let listStation: StationType[] = [];
+    switch (payload.state_id) {
+        case KL_STATE_ID: {
+            listDistrict = await readCSVFile<DistrictType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/kl/districts.csv");
+            listParliament = await readCSVFile<ParliamentType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/kl/parliaments.csv");
+            listStation = await readCSVFile<StationType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/kl/stations.csv");
+            break;
+        }
+        case SELANGOR_STATE_ID: {
+            listDistrict = await readCSVFile<DistrictType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/selangor/districts.csv");
+            listParliament = await readCSVFile<ParliamentType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/selangor/parliaments.csv");
+            listStation = await readCSVFile<StationType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/selangor/stations.csv");
+            break;
+        }
+        case PUTRAJAYA_STATE_ID: {
+            // listDistrict = await readCSVFile<DistrictType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/selangor/districts.csv");
+            // listParliament = await readCSVFile<ParliamentType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/selangor/parliaments.csv");
+            // listStation = await readCSVFile<StationType>("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/location/selangor/stations.csv");
+            break;
+        }
+    }
+
+
 
     for (let i of data) {
-        // const modifiedNoPili = `${i.station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
-        const modifiedNoPili = `${payload.code_pili}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
+        //* Get district
+        const district = listDistrict.find(item => {
+            const itemWords = item.name.toLowerCase().split(' ');
+            const daerahWords = i.daerah.toLowerCase().split(' ');
+            // Count matching words
+            const matchingWords = itemWords.filter(word =>
+                daerahWords.includes(word)
+            );
+            // Return true if at least 1 or 2 words match
+            return matchingWords.length >= 1; // Change to >= 2 if you want at least 2 matches
+        });
+
+        //* Get parliament
+        const parliament = listParliament.find(item => {
+            const itemWords = item.name.toLowerCase().split(' ');
+            const parliamentWords = i.parlimen.toLowerCase().split(' ');
+            // Count matching words
+            const matchingWords = itemWords.filter(word =>
+                parliamentWords.includes(word)
+            );
+            // Return true if at least 1 or 2 words match
+            return matchingWords.length >= 1; // Change to >= 2 if you want at least 2 matches
+        });
+
+        //* Get station
+        // const listExcludeStationCode: string[] = [];
+        const listExcludeStationCode: string[] = ['JHT', 'TDI'];
+        const station = listStation
+            .filter(item => !listExcludeStationCode.includes(item.station_code))
+            .find(item => {
+                return item.station_code.includes(i.station_code);
+            });
+
+        // console.log('District: ', district?.id ?? null);
+        // console.log('Parliament: ', parliament?.id ?? null);
+        // console.log('Station: ', station?.id ?? null);
+
+        const district_id = district?.id ?? null;
+        const parliament_id = parliament?.id ?? null;
+        const station_id = station?.id ?? null;
+        const station_code = station?.station_code ?? null;
+        const modifiedNoPili = `${station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
         const ZONE_ID = getZoneId(i.zon)?.id?.toString() ?? null;
         const SYSTEM_ADMIN_ID = '249';
 
+        if(!station_id || !station_code){
+            throw new Error("station_id or station_code is null!");
+        }
+
         await insertFirehydrant({
             no_pili: modifiedNoPili,
-            // code_pili: i.station_code,
-            code_pili: payload.code_pili,
+            code_pili: station_code,
             address: i.alamat,
             latitude: i.latitud,
             longitude: i.longitud,
-            station_id: payload.station_id,
+            station_id: station_id,
             state_id: payload.state_id,
-            parliament_id: payload.parliament_id,
+            parliament_id,
             zone_id: ZONE_ID,
             status_id: i.id_status_pili.toString(),
             ownership_id: i.id_pemilikan_pili.toString(),
@@ -198,6 +266,7 @@ export async function readCSVAndInsertToDb(
             created_by: SYSTEM_ADMIN_ID,
             source_creation: "Add",
             //TODO: add installation_date, maybe
+            district_id,
         });
     }
 
@@ -213,3 +282,6 @@ function getZoneId(alphabet: string) {
         code: alphabet
     };
 }
+
+
+

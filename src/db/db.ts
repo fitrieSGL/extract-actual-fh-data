@@ -36,6 +36,7 @@ export async function insertFirehydrant(payload: {
     fhtype_id: string,
     created_by: string
     source_creation: "Add",
+    district_id: string | null,
 }) {
     const {
         no_pili,
@@ -52,6 +53,7 @@ export async function insertFirehydrant(payload: {
         fhtype_id,
         created_by,
         source_creation,
+        district_id,
     } = payload;
 
     try {
@@ -75,7 +77,8 @@ export async function insertFirehydrant(payload: {
                 created_at,
                 is_has_industry_risk,
                 is_has_housing_risk,
-                is_has_school_risk
+                is_has_school_risk,
+                district_id
             )
             VALUES (
                 $1, 
@@ -95,7 +98,8 @@ export async function insertFirehydrant(payload: {
                 NOW() AT TIME ZONE 'UTC',
                 FALSE,
                 FALSE,
-                FALSE
+                FALSE,
+                $15
             )
             RETURNING *
         `;
@@ -115,6 +119,7 @@ export async function insertFirehydrant(payload: {
             fhtype_id,
             created_by,
             source_creation,
+            district_id,
             //TODO: add installation_date, maybe
         ]);
 
