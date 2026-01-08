@@ -1,5 +1,5 @@
 import { DistrictType, ParliamentType, StationType } from 'types/csv';
-import { insertFirehydrant } from '../db/db';
+import { insertFirehydrant, insertFirehydrantWithTransaction } from '../db/db';
 import { readCSVFile } from '../services/extractExcel';
 import * as ExcelJS from 'exceljs';
 
@@ -41,93 +41,53 @@ interface SPPBFhType {
     city_id_uuid: string;
 }
 
-
-export async function readExcelAndInsertToDb() {
-    const workbook = new ExcelJS.Workbook();
-    const path = 'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/result/bbp-p7.csv';
-
-    // Use csv.readFile instead of xlsx.readFile
-    await workbook.csv.readFile(path);
-
-    // Get the first worksheet (CSV files create one worksheet)
-    const worksheet = workbook.getWorksheet(1);
-
-    const data: {
-        no_pili: string,
-        pili_awam_ph?: number,
-        pili_awam_gh?: number,
-        pili_swasta_ph?: number,
-        pili_swasta_gh?: number,
-        alamat: string,
-        nama_teman_pili?: string,
-        ic_teman_pili?: string,
-        tarikh_daftar_teman_pili?: string,
-        latitude: number,
-        longitude: number
-    }[] = [];
-    let headers: any = [];
-
-    worksheet?.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-            // First row as headers
-            row.eachCell((cell, colNumber) => {
-                headers[colNumber] = cell.value;
-            });
-        } else {
-            // Data rows
-            const rowData: any = {};
-            row.eachCell((cell, colNumber) => {
-                const header = headers[colNumber];
-                if (header) {
-                    rowData[header] = cell.value;
-                }
-            });
-
-            // Only add row if it has data
-            if (Object.keys(rowData).length > 0) {
-                data.push(rowData);
-            }
-        }
-    });
-
-    console.log("Data: ", data[0]);
-
-    // for (let i of data) {
-    //     let fhTypeId: string = "";
-    //     let fhOwnershipId: string = "";
-    //     if(i.pili_awam_ph){
-    //         fhTypeId = '1';
-    //         fhOwnershipId = '1';
-    //     }
-    //     if(i.pili_awam_gh){
-    //         fhTypeId = '2';
-    //         fhOwnershipId = '1';
-    //     }
-    //     if(i.pili_swasta_ph){
-    //         fhTypeId = '1';
-    //         fhOwnershipId = '2';
-    //     }
-    //     if(i.pili_swasta_gh){
-    //         fhTypeId = '2';
-    //         fhOwnershipId = '2';
-    //     }
-
-
-    //     await insertFirehydrant({
-    //         no_pili: i.no_pili,
-    //         code_pili: 'PJY',
-    //         address: i.alamat,
-    //         latitude: i.latitude,
-    //         longitude: i.longitude,
-    //         station_id: '14e54cbf-55e5-4931-b0db-0bc1035ba3e6',
-    //         status_id: '1',
-    //         ownership_id: fhOwnershipId,
-    //         fhtype_id: fhTypeId,
-    //         created_by: '249'
-    //     });
-    // }
-
-    return data;
+interface SPPBFhTwoType {
+    id_pili: string;
+    hydrant_id_uuid: string;
+    station_id_uuid: string;
+    station_id: string;
+    station_code: string;
+    zon: string;
+    no_pili: string;
+    pili_num_combine: string;
+    alamat: string;
+    alamat2: string;
+    penanda_kawasan: string;
+    no_premis: string;
+    id_kedudukan: string;
+    kedudukan: string;
+    poskod: string;
+    lokasi: string;
+    latitud: number | null;
+    longitud: number | null;
+    id_negeri: string;
+    state_id_uuid: string;
+    negeri: string;
+    id_daerah: string;
+    daerah: string;
+    id_pemilikan_pili: string;
+    pemilikan_pili: string;
+    id_status_pili: string;
+    status_pili: string;
+    diameter_pengeluaran: string;
+    image_1: string;
+    catatan: string;
+    id_jenis_pili: string;
+    jenis_pili: string;
+    id_parlimen: string;
+    parlimen: string;
+    id_dun: string;
+    dun: string;
+    tarikh_pili: string;
+    id_syarikat_air: string;
+    flag_migrasi: string;
+    id_bandar: string;
+    bandar: string;
+    city_id_uuid: string;
+    saiz_main_paip: string;
+    latitud_original: string;
+    longitud_original: string;
+    no_pili_asal: string;
 }
 
 
@@ -273,7 +233,7 @@ export async function readCSVAndInsertToDb(
         }
 
         const modifiedNoPili = `${station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
-        const ZONE_ID = getZoneId(i.zon)?.id?.toString() ?? null;
+        const ZONE_ID = getZoneId(i?.zon)?.id?.toString() ?? null;
         const SYSTEM_ADMIN_ID = '249';
 
         await insertFirehydrant({
@@ -308,7 +268,124 @@ export async function readCSVAndInsertToDb(
     console.log(`  - Skipped: ${skippedRows}`);
 }
 
-function getZoneId(alphabet: string) {
+export async function readCSVAndInsertToDbTwo(
+    filePath: string,
+) {
+    try {
+        const workbook = new ExcelJS.Workbook();
+
+        console.log("Reading csv...");
+        await workbook.csv.readFile(filePath);
+
+        const worksheet = workbook.getWorksheet(1);
+
+        if (!worksheet) {
+            throw new Error('Worksheet not found');
+        }
+
+        let headers: any = [];
+        let processedRows = 0;
+        let insertedRows = 0;
+        let skippedRows = 0;
+
+        // Process rows one by one
+        for await (const row of worksheet.getRows(1, worksheet.rowCount) || []) {
+            const rowNumber = row.number;
+
+            if (rowNumber === 1) {
+                // First row as headers
+                row.eachCell((cell, colNumber) => {
+                    headers[colNumber] = cell.value;
+                });
+                continue;
+            }
+
+            // Data rows
+            const rowData: any = {};
+            row.eachCell((cell, colNumber) => {
+                const header = headers[colNumber];
+                if (header) {
+                    rowData[header] = cell.value;
+                }
+            });
+
+            // Only process row if it has data
+            if (Object.keys(rowData).length === 0) {
+                continue;
+            }
+
+            const i: SPPBFhTwoType = rowData as any;
+
+            const district_id = i.id_daerah;
+            const parliament_id = i.id_parlimen ?? null;
+            const station_id = i.station_id ?? null;
+            const station_code = i.station_code ?? null;
+
+            if (!station_id || !station_code) {
+                skippedRows++;
+                console.log(`Skipped row ${rowNumber}: Station not found for code ${i.station_code}`);
+                continue;
+            }
+
+            const modifiedNoPili = `${station_code}-${i.zon}-${i.no_pili.toString().padStart(3, '0')}`;
+            const ZONE_ID = getZoneId(i?.zon)?.id?.toString() ?? null;
+            const SYSTEM_ADMIN_ID = '249';
+
+            try {
+                await insertFirehydrantWithTransaction({
+                    no_pili: modifiedNoPili,
+                    code_pili: station_code,
+                    address: i.alamat,
+                    latitude: i.latitud as number,
+                    longitude: i.longitud as number,
+                    station_id: station_id,
+                    state_id: i.id_negeri,
+                    parliament_id,
+                    zone_id: ZONE_ID,
+                    status_id: i?.id_status_pili?.toString(),
+                    ownership_id: i?.id_pemilikan_pili?.toString(),
+                    fhtype_id: i?.id_jenis_pili?.toString(),
+                    created_by: SYSTEM_ADMIN_ID,
+                    source_creation: "Add",
+                    district_id,
+                });
+
+                insertedRows++;
+            } catch (error: any) {
+                // Check if it's a duplicate key error (PostgreSQL error code 23505)
+                if (error.code === '23505') {
+                    skippedRows++;
+                    console.log(`Skipped row ${rowNumber}: Duplicate no_pili ${modifiedNoPili}`);
+                } else {
+                    // For other errors, log and skip
+                    skippedRows++;
+                    console.error(`Error on row ${rowNumber}:`, error.message);
+                }
+            }
+
+            processedRows++;
+
+            // Log progress every 1000 rows
+            if (processedRows % 1000 === 0) {
+                console.log(`Processed ${processedRows} rows (Inserted: ${insertedRows}, Skipped: ${skippedRows})...`);
+            }
+        }
+
+        console.log(`✓ Completed: ${processedRows} total rows processed`);
+        console.log(`  - Inserted: ${insertedRows}`);
+        console.log(`  - Skipped: ${skippedRows}`);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
+
+
+function getZoneId(alphabet: string | null) {
+    if(!alphabet){
+        return null
+    }
     // Convert A-Z to 1-26
     const id = alphabet.toUpperCase().charCodeAt(0) - 64;
 

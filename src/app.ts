@@ -1,4 +1,4 @@
-import { readExcelAndInsertToDb, readCSVAndInsertToDb } from './services/serviceDb';
+import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/serviceDb';
 import { readfileSpbbExcelAndConvertToCSV } from './services/extractExcel';
 import { getCompoundData, insertFirehydrant } from './db/db';
 import * as ExcelJS from 'exceljs';
@@ -12,17 +12,21 @@ interface ListModifiedDataType {
 }
 
 //* Run here
-readCSVAndInsertToDb(
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-selangor.csv',
-  {
-    state_id: 'b74645e5-3ad2-4dd9-ba72-3b7eb8f16643',
-    listExcludeStationCode: ['CBY', 'BJG', 'BGI'],
-  }
+// readCSVAndInsertToDb(
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-selangor.csv',
+//   {
+//     state_id: 'b74645e5-3ad2-4dd9-ba72-3b7eb8f16643',
+//     listExcludeStationCode: ['CBY', 'BJG', 'BGI'],
+//   }
+// );
+
+readCSVAndInsertToDbTwo(
+  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/SPPB - JH.csv',
 );
 
 // readfileSpbbExcelAndConvertToCSV(
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - SL.xlsx',
-//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-selangor.csv',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - JH.xlsx',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-johor.csv',
 //   'Pili'
 // );
 

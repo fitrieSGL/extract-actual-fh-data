@@ -10,4 +10,5 @@ yarn-error.log
 .vscode
 #coverage
 coverage
-.csv
+*.csv
+*.xlsx
