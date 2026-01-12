@@ -2,6 +2,7 @@ import { DistrictType, ParliamentType, StationType } from 'types/csv';
 import { insertFirehydrant, insertFirehydrantWithTransaction } from '../db/db';
 import { readCSVFile } from '../services/extractExcel';
 import * as ExcelJS from 'exceljs';
+import { generateCSV } from './csv-service';
 
 interface SPPBFhType {
     id_pili: number;
@@ -44,8 +45,9 @@ interface SPPBFhType {
 interface SPPBFhTwoType {
     id_pili: string;
     hydrant_id_uuid: string;
-    station_id_uuid: string;
-    station_id: string;
+    station_id_uuid: string | null;
+    station_id: string | null;
+    external_station_id: string | null;
     station_code: string;
     zon: string;
     no_pili: string;
@@ -270,6 +272,7 @@ export async function readCSVAndInsertToDb(
 
 export async function readCSVAndInsertToDbTwo(
     filePath: string,
+    csvErrorOutputPath: string
 ) {
     try {
         const workbook = new ExcelJS.Workbook();
@@ -287,6 +290,7 @@ export async function readCSVAndInsertToDbTwo(
         let processedRows = 0;
         let insertedRows = 0;
         let skippedRows = 0;
+        let listSkippedRows: string[] = [];
 
         // Process rows one by one
         for await (const row of worksheet.getRows(1, worksheet.rowCount) || []) {
@@ -318,12 +322,13 @@ export async function readCSVAndInsertToDbTwo(
 
             const district_id = i.id_daerah;
             const parliament_id = i.id_parlimen ?? null;
-            const station_id = i.station_id ?? null;
+            const station_id = i.external_station_id ?? null;
             const station_code = i.station_code ?? null;
 
             if (!station_id || !station_code) {
                 skippedRows++;
-                console.log(`Skipped row ${rowNumber}: Station not found for code ${i.station_code}`);
+                const reason = `[${rowNumber}][id_pili - ${i.id_pili}]: Skipped row ${rowNumber}: Station not found for code ${i.station_code}`;
+                listSkippedRows.push(reason);
                 continue;
             }
 
@@ -355,11 +360,13 @@ export async function readCSVAndInsertToDbTwo(
                 // Check if it's a duplicate key error (PostgreSQL error code 23505)
                 if (error.code === '23505') {
                     skippedRows++;
-                    console.log(`Skipped row ${rowNumber}: Duplicate no_pili ${modifiedNoPili}`);
+                    const reason = `[${row}][id_pili - ${i.id_pili}]: Skipped row ${rowNumber}: Duplicate no_pili ${modifiedNoPili}`;
+                    listSkippedRows.push(reason);
                 } else {
                     // For other errors, log and skip
                     skippedRows++;
-                    console.error(`Error on row ${rowNumber}:`, error.message);
+                    const reason = `[${row}][id_pili - ${i.id_pili}]: Error on row ${rowNumber}: ${error.message}`;
+                    listSkippedRows.push(reason);
                 }
             }
 
@@ -374,6 +381,10 @@ export async function readCSVAndInsertToDbTwo(
         console.log(`✓ Completed: ${processedRows} total rows processed`);
         console.log(`  - Inserted: ${insertedRows}`);
         console.log(`  - Skipped: ${skippedRows}`);
+        generateCSV(listSkippedRows, {
+            header: "Error",
+            outputPath: csvErrorOutputPath,
+        })
     } catch (error) {
         console.error(error);
     }
@@ -383,7 +394,7 @@ export async function readCSVAndInsertToDbTwo(
 
 
 function getZoneId(alphabet: string | null) {
-    if(!alphabet){
+    if (!alphabet) {
         return null
     }
     // Convert A-Z to 1-26
