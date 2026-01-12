@@ -21,8 +21,8 @@ interface ListModifiedDataType {
 // );
 
 readCSVAndInsertToDbTwo(
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/new-fh-data/LA.csv',
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/error/LA.csv'
+  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/new-fh-data/PS.csv',
+  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/error/PS.csv'
 );
 
 // readfileSpbbExcelAndConvertToCSV(

@@ -62,10 +62,12 @@ interface SPPBFhTwoType {
     lokasi: string;
     latitud: number | null;
     longitud: number | null;
-    id_negeri: string;
+    id_negeri: string | null;
+    state_id: string | null;
     state_id_uuid: string;
     negeri: string;
-    id_daerah: string;
+    id_daerah: string | null;
+    district_id: string | null;
     daerah: string;
     id_pemilikan_pili: string;
     pemilikan_pili: string;
@@ -76,7 +78,8 @@ interface SPPBFhTwoType {
     catatan: string;
     id_jenis_pili: string;
     jenis_pili: string;
-    id_parlimen: string;
+    id_parlimen: string | null;
+    parliament_id: string | null;
     parlimen: string;
     id_dun: string;
     dun: string;
@@ -320,10 +323,18 @@ export async function readCSVAndInsertToDbTwo(
 
             const i: SPPBFhTwoType = rowData as any;
 
-            const district_id = i.id_daerah;
-            const parliament_id = i.id_parlimen ?? null;
+            const district_id = i.district_id ?? null;
+            const parliament_id = i.parliament_id ?? null;
             const station_id = i.external_station_id ?? null;
             const station_code = i.station_code ?? null;
+            const state_id = i.state_id;
+
+            if(!state_id){
+                skippedRows++;
+                const reason = `[${rowNumber}][id_pili - ${i.id_pili}]: Skipped row ${rowNumber}: State id is not present`;
+                listSkippedRows.push(reason);
+                continue;
+            }
 
             if (!station_id || !station_code) {
                 skippedRows++;
@@ -344,7 +355,7 @@ export async function readCSVAndInsertToDbTwo(
                     latitude: i.latitud as number,
                     longitude: i.longitud as number,
                     station_id: station_id,
-                    state_id: i.id_negeri,
+                    state_id,
                     parliament_id,
                     zone_id: ZONE_ID,
                     status_id: i?.id_status_pili?.toString(),
