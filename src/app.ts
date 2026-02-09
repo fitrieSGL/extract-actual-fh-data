@@ -1,8 +1,5 @@
+import { readCsvOws } from './services/ows/csvService';
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
-import { readfileSpbbExcelAndConvertToCSV } from './services/firehydrant/extractExcel';
-import { getCompoundData, insertFirehydrant } from './db/db';
-import * as ExcelJS from 'exceljs';
-
 
 
 //* Run here
@@ -14,16 +11,19 @@ import * as ExcelJS from 'exceljs';
 //   }
 // );
 
-readCSVAndInsertToDbTwo(
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/new-fh-data/PK.csv',
-  'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/error/PK.csv'
-);
+// readCSVAndInsertToDbTwo(
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/new-fh-data/PK.csv',
+//   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/error/PK.csv'
+// );
 
 // readfileSpbbExcelAndConvertToCSV(
 //   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/excel-file/SPPB - JH.xlsx',
 //   'C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/pili-johor.csv',
 //   'Pili'
 // );
+
+
+readCsvOws();
 
 
 
