@@ -1,4 +1,4 @@
-import { readCsvOws } from './services/ows/csvService';
+import { readCsvOwsAndConvertToFhisDBOwsCsv } from './services/ows/csvService';
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
 
 
@@ -23,9 +23,8 @@ import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehy
 // );
 
 
-readCsvOws();
-
-
+// readCsvOws();
+readCsvOwsAndConvertToFhisDBOwsCsv();
 
 
 

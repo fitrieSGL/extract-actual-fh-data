@@ -32,3 +32,31 @@ export async function readCsv(
     return listData;
 
 }
+
+
+export async function writeCsv(
+    path: string,
+    data: any[]
+): Promise<void> {
+    if (!data || data.length === 0) {
+        throw new Error('No data to write to CSV');
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1');
+
+    // Get headers from first object keys
+    const headers = Object.keys(data[0]);
+
+    // Add header row
+    worksheet.addRow(headers);
+
+    // Add data rows
+    data.forEach((item) => {
+        const row = headers.map(header => item[header]);
+        worksheet.addRow(row);
+    });
+
+    // Write to file
+    await workbook.csv.writeFile(path);
+}
