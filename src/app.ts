@@ -1,4 +1,4 @@
-import { readCsvOwsAndConvertToFhisDBOwsCsv } from './services/ows/csvService';
+import { insertDataOwsCSVToDB, readCsvOwsAndConvertToFhisDBOwsCsv } from './services/ows/csvService';
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
 
 
@@ -24,7 +24,8 @@ import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehy
 
 
 // readCsvOws();
-readCsvOwsAndConvertToFhisDBOwsCsv();
+// readCsvOwsAndConvertToFhisDBOwsCsv();
+// insertDataOwsCSVToDB("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/ows/exported-ows-data.csv");
 
 
 

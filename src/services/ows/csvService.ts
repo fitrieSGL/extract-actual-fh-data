@@ -1,5 +1,6 @@
 import * as path from "path";
 import { readCsv, writeCsv } from "./../utils/csvService";
+import { insertOwsWithTransaction } from "./../../db/ows/db";
 
 
 interface SPSAOwsType {
@@ -18,26 +19,16 @@ interface SPSAOwsType {
 }
 
 interface FHISOwsType {
-    // id
     reference_no: string | null,
-    // capacity_id
     created_by: number | null
-    // updated_by
     type_id: string | null,
-    // created_at
-    // updated_at
-    // deletedAt
-    // location
     latitude: number | null,
     longitude: number | null,
     status_id: number | null,
     address: string | null,
     station_id: string | null,
-    // status_remark
-    // dun_id
     state_id: string | null,
     district_id: string | null,
-    // parliament_id
 }
 
 //TODO: ows_type_id
@@ -75,6 +66,23 @@ export async function readCsvOwsAndConvertToFhisDBOwsCsv() {
     // console.log(listDataConvert);
     const filePathExport = path.join(__dirname, '../../csv/ows/exported-ows-data.csv')
     await writeCsv(filePathExport, listDataConvert);
+
+}
+
+
+export async function insertDataOwsCSVToDB(filePath: string) {
+    const listData: FHISOwsType[] = await readCsv(filePath);
+
+    console.log("------------------------------Begin Inserting Data OWS------------------------------");
+    for (let i of listData) {
+        const data: FHISOwsType = {
+            ...i,
+            latitude: (typeof i.latitude !== "number") ? null : i.latitude,
+            longitude: (typeof i.longitude !== "number") ? null : i.longitude
+        }
+        await insertOwsWithTransaction(data);
+    }
+    console.log("------------------------------Finish Inserting Data OWS------------------------------");
 
 }
 

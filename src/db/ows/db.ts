@@ -1,249 +1,96 @@
-// import * as dotenv from 'dotenv';
-// import { Pool } from 'pg';
+import * as dotenv from 'dotenv';
+import { Pool } from 'pg';
 
-// dotenv.config();
+dotenv.config();
 
-// const pool = new Pool({
-//     user: process.env.POSTGRES_USER,
-//     host: process.env.POSTGRES_HOST,
-//     database: process.env.POSTGRES_DATABASE,
-//     password: process.env.POSTGRES_PASSWORD,
-//     port: process.env.POSTGRES_PORT as any,
-// });
-
-
-// export function getCompoundData() {
-//     pool.query('SELECT * FROM compound', (error, results) => {
-//         if (error) {
-//             throw error
-//         }
-//         console.log(results.rows);
-//     });
-// }
-
-// export async function insertFirehydrant(payload: {
-//     no_pili: string, //* 3 Char, example: 001
-//     code_pili: string,
-//     address: string,
-//     latitude: number,
-//     longitude: number,
-//     station_id: string,
-//     state_id: string,
-//     parliament_id: string | null,
-//     zone_id: string | null,
-//     status_id: string,
-//     ownership_id: string,
-//     fhtype_id: string,
-//     created_by: string
-//     source_creation: "Add",
-//     district_id: string | null,
-// }) {
-//     const {
-//         no_pili,
-//         code_pili,
-//         address,
-//         latitude,
-//         longitude,
-//         station_id,
-//         state_id,
-//         parliament_id,
-//         zone_id,
-//         status_id,
-//         ownership_id,
-//         fhtype_id,
-//         created_by,
-//         source_creation,
-//         district_id,
-//     } = payload;
-
-//     try {
-//         // Step 1: Insert fire hydrant record using the retrieved station ID
-//         const insertQuery = `
-//             INSERT INTO fire_hydrant (
-//                 no_pili, 
-//                 code_pili, 
-//                 address, 
-//                 latitude, 
-//                 longitude, 
-//                 external_station_id,
-//                 state_id,
-//                 parliament_id,
-//                 zone_id,
-//                 status_id, 
-//                 ownership_id, 
-//                 fhtype_id, 
-//                 created_by,
-//                 source_creation,
-//                 created_at,
-//                 is_has_industry_risk,
-//                 is_has_housing_risk,
-//                 is_has_school_risk,
-//                 district_id
-//             )
-//             VALUES (
-//                 $1, 
-//                 $2, 
-//                 $3, 
-//                 $4, 
-//                 $5, 
-//                 $6, 
-//                 $7, 
-//                 $8, 
-//                 $9, 
-//                 $10,
-//                 $11,
-//                 $12,
-//                 $13,
-//                 $14,
-//                 NOW() AT TIME ZONE 'UTC',
-//                 FALSE,
-//                 FALSE,
-//                 FALSE,
-//                 $15
-//             )
-//             RETURNING *
-//         `;
-
-//         const insertResult = await pool.query(insertQuery, [
-//             no_pili,
-//             code_pili,
-//             address,
-//             latitude,
-//             longitude,
-//             station_id,
-//             state_id,
-//             parliament_id,
-//             zone_id,
-//             status_id,
-//             ownership_id,
-//             fhtype_id,
-//             created_by,
-//             source_creation,
-//             district_id,
-//             //TODO: add installation_date, maybe
-//         ]);
-
-//         // Log the result or handle success
-//         console.log('Fire hydrant inserted:', insertResult.rows[0]);
-
-//     } catch (error) {
-//         console.error('Error executing query:', error);
-//     }
-//     // finally {
-//     //     if (pool) {
-//     //         pool.release(); // Release the client back to the pool
-//     //     }
-//     // }
-
-// }
+const pool = new Pool({
+    user: process.env.POSTGRES_USER,
+    host: process.env.POSTGRES_HOST,
+    database: process.env.POSTGRES_DATABASE,
+    password: process.env.POSTGRES_PASSWORD,
+    port: process.env.POSTGRES_PORT as any,
+});
 
 
-// export async function insertFirehydrantWithTransaction(payload: {
-//     no_pili: string,
-//     code_pili: string,
-//     address: string,
-//     latitude: number,
-//     longitude: number,
-//     station_id: string,
-//     state_id: string,
-//     parliament_id: string | null,
-//     zone_id: string | null,
-//     status_id: string,
-//     ownership_id: string,
-//     fhtype_id: string,
-//     created_by: string
-//     source_creation: "Add",
-//     district_id: string | null,
-// }) {
-//     const {
-//         no_pili,
-//         code_pili,
-//         address,
-//         latitude,
-//         longitude,
-//         station_id,
-//         state_id,
-//         parliament_id,
-//         zone_id,
-//         status_id,
-//         ownership_id,
-//         fhtype_id,
-//         created_by,
-//         source_creation,
-//         district_id,
-//     } = payload;
+interface FHISOwsType {
+    reference_no: string | null,
+    created_by: number | null
+    type_id: string | null,
+    latitude: number | null,
+    longitude: number | null,
+    status_id: number | null,
+    address: string | null,
+    station_id: string | null,
+    state_id: string | null,
+    district_id: string | null,
+}
 
-//     // Get a client from the pool
-//     const client = await pool.connect();
+export async function insertOwsWithTransaction(payload: FHISOwsType) {
+    const {
+        reference_no,
+        created_by,
+        type_id,
+        latitude,
+        longitude,
+        status_id,
+        address,
+        station_id,
+        state_id,
+        district_id,
+    } = payload;
 
-//     try {
-//         // Begin transaction
-//         await client.query('BEGIN');
+    // Get a client from the pool
+    const client = await pool.connect();
 
-//         const insertQuery = `
-//             INSERT INTO fire_hydrant (
-//                 no_pili, 
-//                 code_pili, 
-//                 address, 
-//                 latitude, 
-//                 longitude, 
-//                 external_station_id,
-//                 state_id,
-//                 parliament_id,
-//                 zone_id,
-//                 status_id, 
-//                 ownership_id, 
-//                 fhtype_id, 
-//                 created_by,
-//                 source_creation,
-//                 created_at,
-//                 is_has_industry_risk,
-//                 is_has_housing_risk,
-//                 is_has_school_risk,
-//                 district_id
-//             )
-//             VALUES (
-//                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-//                 $11, $12, $13, $14, NOW() AT TIME ZONE 'UTC',
-//                 FALSE, FALSE, FALSE, $15
-//             )
-//             RETURNING *
-//         `;
+    try {
+        // Begin transaction
+        await client.query('BEGIN');
 
-//         const insertResult = await client.query(insertQuery, [
-//             no_pili,
-//             code_pili,
-//             address,
-//             latitude,
-//             longitude,
-//             station_id,
-//             state_id,
-//             parliament_id,
-//             zone_id,
-//             status_id,
-//             ownership_id,
-//             fhtype_id,
-//             created_by,
-//             source_creation,
-//             district_id,
-//         ]);
+        const insertQuery = `
+            INSERT INTO open_water (
+                reference_no,
+                created_by,
+                type_id,
+                latitude,
+                longitude,
+                status_id,
+                address,
+                station_id,
+                state_id,
+                district_id
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+            )
+            RETURNING *
+        `;
 
-//         // If you have more queries, add them here
-//         // await client.query('INSERT INTO another_table ...');
+        const insertResult = await client.query(insertQuery, [
+            reference_no,
+            created_by,
+            type_id,
+            latitude,
+            longitude,
+            status_id,
+            address,
+            station_id,
+            state_id,
+            district_id,
+        ]);
 
-//         // Commit transaction
-//         await client.query('COMMIT');
+        // Commit transaction
+        await client.query('COMMIT');
 
-//         console.log('Fire hydrant inserted:', insertResult.rows[0]);
-//         return insertResult.rows[0];
+        console.log('OWS inserted:', insertResult.rows[0]);
+        return insertResult.rows[0];
 
-//     } catch (error) {
-//         // Rollback transaction on error
-//         await client.query('ROLLBACK');
-//         console.error('Error executing query:', error);
-//         throw error;
-//     } finally {
-//         // Release the client back to the pool
-//         client.release();
-//     }
-// }
+    } catch (error) {
+        // Rollback transaction on error
+        await client.query('ROLLBACK');
+        console.error('Error executing query:', error);
+        throw error;
+    } finally {
+        // Release the client back to the pool
+        client.release();
+    }
+}
