@@ -158,13 +158,24 @@ async function updateTemanPiliMembershipNo(
         return;
     }
 
-    //TODO: if year changes, start again to 001, like BBB-2025-800, BBB-2026-001, or better not to use teman_pili_id, show fix
-    const membershipNo = `${payload.station_code}-${dayjs(payload.created_at).year()}-${payload.teman_pili_id.toString().padStart(3, "0")}`;
+    const year = dayjs(payload.created_at).year();
+
+    // Count how many members already exist for this station + year
+    const countQuery = `
+        SELECT COUNT(*) as total
+        FROM teman_pili_bomba
+        WHERE membership_no LIKE $1
+    `;
+    const countResult = await client.query(countQuery, [`${payload.station_code}-${year}-%`]);
+    const sequence = parseInt(countResult.rows[0].total) + 1;
+
+    const membershipNo = `${payload.station_code}-${year}-${sequence.toString().padStart(3, "0")}`;
+
     const updateQuery = `
-            UPDATE teman_pili_bomba
-            SET membership_no = $1
-            WHERE id = $2
-        `;
+        UPDATE teman_pili_bomba
+        SET membership_no = $1
+        WHERE id = $2
+    `;
 
     await client.query(updateQuery, [
         membershipNo,
@@ -191,8 +202,8 @@ async function linkFireHydrantTemanPili(
     `;
 
     await client.query(insertQuery, [
-            payload.temanpili_id,
-            payload.no_pili,
-        ]);
+        payload.temanpili_id,
+        payload.no_pili,
+    ]);
 
 }
