@@ -1,5 +1,7 @@
 import { insertDataOwsCSVToDB, readCsvOwsAndConvertToFhisDBOwsCsv } from './services/ows/csvService';
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
+import { updateCSVListFhOnWater } from './services/utils/csvService';
+import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 
 
 //* Run here
@@ -28,8 +30,10 @@ import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehy
 // insertDataOwsCSVToDB("C:/Users/Fitrie/Desktop/etc-FHIS/extract-actual-data/src/csv/ows/exported-ows-data.csv");
 
 
+// updateCSVListFhOnWater()
 
 
+readCSVSPPBTemanPili()
 
 
 
