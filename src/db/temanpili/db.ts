@@ -115,7 +115,8 @@ export async function insertTemanPiliWithTransaction(payload: TemanPiliType) {
         ]);
 
         const temanPiliId = insertResult.rows[0].id;
-        const station_code = no_pili?.split("-")[0];
+        //TODO: get from payload, dont use
+        const station_code = no_pili && String(no_pili).trim() !== '#N/A' ? String(no_pili).split("-")[0] : null;
         await updateTemanPiliMembershipNo(client, {
             created_at,
             station_code: station_code,

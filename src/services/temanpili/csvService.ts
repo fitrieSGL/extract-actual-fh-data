@@ -28,13 +28,13 @@ interface SPPBTemanPiliType {
 }
 
 export async function readCSVSPPBTemanPili() {
-    const filePath = path.join(__dirname, '../../csv/new-teman-pili-data/TP-SL.csv');
+    const filePath = path.join(__dirname, '../../csv/new-teman-pili-data/TP-JH.csv');
     const listData: SPPBTemanPiliType[] = await readCsv(filePath);
 
     // const listDataSlice = listData.slice(0, 10);
 
     for (let i of listData) {
-        const modifyCreatedAt = (i.created_at === "0000-00-00") ? dayjs().format('YYYY-MM-DD HH:mm:ss') : i.created_at;
+        const modifyCreatedAt = (i.created_at === "0000-00-00" || !i.created_at) ? dayjs().format('YYYY-MM-DD HH:mm:ss') : i.created_at;
 
         const station_id = await getStationIdByStationCode(i.no_pili);
         const no_ic = String(i.no_ic).includes('-')
@@ -52,11 +52,19 @@ export async function readCSVSPPBTemanPili() {
 }
 
 async function getStationIdByStationCode(no_pili: string | null) {
-    if (!no_pili) {
+    console.log(no_pili)
+    
+    if (!no_pili || String(no_pili).trim() === '#N/A') {
         return null;
     }
 
-    const station_code = no_pili.split("-")[0];
+    const noPiliStr = String(no_pili).split("-")[0];
+
+    if (!noPiliStr) {
+        return null;
+    }
+
+    const station_code = noPiliStr;
 
     const [
         johor,
