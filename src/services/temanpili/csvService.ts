@@ -1,6 +1,6 @@
 import * as path from "path";
 import { readCsv, writeCsv } from "./../utils/csvService";
-import { insertTemanPiliWithTransaction } from "./../../db/temanpili/db";
+import { insertTemanPiliWithTransaction, TemanPiliType } from "./../../db/temanpili/db";
 import dayjs from "dayjs";
 
 
@@ -28,7 +28,7 @@ interface SPPBTemanPiliType {
 }
 
 export async function readCSVSPPBTemanPili() {
-    const filePath = path.join(__dirname, '../../csv/new-teman-pili-data/TP-JH.csv');
+    const filePath = path.join(__dirname, '../../csv/new-teman-pili-data/TP-SL.csv');
     const listData: SPPBTemanPiliType[] = await readCsv(filePath);
 
     // const listDataSlice = listData.slice(0, 10);
@@ -37,11 +37,20 @@ export async function readCSVSPPBTemanPili() {
         const modifyCreatedAt = (i.created_at === "0000-00-00" || !i.created_at) ? dayjs().format('YYYY-MM-DD HH:mm:ss') : i.created_at;
 
         const station_id = await getStationIdByStationCode(i.no_pili);
+
+        if(!station_id){
+            continue;
+        }
+
         const no_ic = String(i.no_ic).includes('-')
             ? String(i.no_ic).replaceAll('-', '')
             : i.no_ic;
-        const modifyData = {
+
+        const phone_no = i?.phone_no?.toString().replace(/^(?!0)/, '0');
+
+        const modifyData: TemanPiliType = {
             ...i,
+            phone_no,
             no_ic,
             station_id,
             created_at: modifyCreatedAt,
