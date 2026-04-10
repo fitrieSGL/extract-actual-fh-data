@@ -38,7 +38,7 @@ export async function readCSVSPPBTemanPili() {
 
         const station_id = await getStationIdByStationCode(i.no_pili);
 
-        if(!station_id){
+        if (!station_id) {
             continue;
         }
 
@@ -62,7 +62,7 @@ export async function readCSVSPPBTemanPili() {
 
 async function getStationIdByStationCode(no_pili: string | null) {
     console.log(no_pili)
-    
+
     if (!no_pili || String(no_pili).trim() === '#N/A') {
         return null;
     }

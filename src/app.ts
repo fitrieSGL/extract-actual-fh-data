@@ -2,6 +2,7 @@ import { insertDataOwsCSVToDB, readCsvOwsAndConvertToFhisDBOwsCsv } from './serv
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
 import { updateCSVListFhOnWater } from './services/utils/csvService';
 import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
+import { generateTemplateImportFireHydrantCSV } from './services/firehydrant/fh-util';
 
 
 //* Run here
@@ -33,7 +34,8 @@ import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 // updateCSVListFhOnWater()
 
 
-readCSVSPPBTemanPili()
+// readCSVSPPBTemanPili()
+generateTemplateImportFireHydrantCSV();
 
 
 
