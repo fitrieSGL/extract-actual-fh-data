@@ -1,4 +1,5 @@
 import { writeCsv } from "../../services/utils/csvService";
+import * as ExcelJS from 'exceljs';
 
 export async function generateTemplateImportFireHydrantCSV() {
     const listDataForCSV = [
@@ -18,7 +19,7 @@ export async function generateTemplateImportFireHydrantCSV() {
              * Leave blank if null
              * YA / TIDAK
              */
-            ["Ada Paip Utama"]: "YA", 
+            ["Ada Paip Utama (YA / TIDAK)"]: "YA",
             /**
              * mainPipeSize
              * Leave blank if null
@@ -28,7 +29,7 @@ export async function generateTemplateImportFireHydrantCSV() {
              * distanceFromNearestStation
              * Leave blank if null
              */
-            ["Balai Bomba Terdekat (km)"]: 22, 
+            ["Balai Bomba Terdekat (km)"]: 22,
             /**
              * distanceFromNearestFireHydrant
              * Leave blank if null
@@ -75,19 +76,19 @@ export async function generateTemplateImportFireHydrantCSV() {
              * !Required
              * YA / TIDAK
              */
-            ["Risiko Industri?"]: "YA",
+            ["Risiko Industri? (YA / TIDAK)"]: "YA",
             /**
              * is_has_housing_risk
              * !Required
              * YA / TIDAK
              */
-            ["Risiko Perumahan?"]: "TIDAK",
+            ["Risiko Perumahan? (YA / TIDAK)"]: "TIDAK",
             /**
              * is_has_school_risk
              * !Required
              * YA / TIDAK
              */
-            ["Risiko Sekolah?"]: "TIDAK",
+            ["Risiko Sekolah? (YA / TIDAK)"]: "TIDAK",
             /**
              * otherRisks
              * Leave blank if null
@@ -136,12 +137,12 @@ export async function generateTemplateImportFireHydrantCSV() {
              * Leave blank if null
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Daerah"]: null, 
+            ["ID Daerah"]: null,
             /**
              * parliament_id
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Parlimen"]: 1, 
+            ["ID Parlimen"]: 1,
             /**
              * assemblymen_id
              * Map out this id, dont use direct db id,use like 1,2,3
@@ -184,4 +185,302 @@ export async function generateTemplateImportFireHydrantCSV() {
     ];
 
     await writeCsv("C:/Users/Fitrie/Downloads/template-fire-hydrant-import.csv", listDataForCSV);
+}
+
+
+
+
+export async function createFHImportLookup(
+    pathExport: string
+) {
+    const workbook = new ExcelJS.Workbook();
+    await sheetBalai(workbook);
+    await sheetState(workbook);
+    await sheetDistrict(workbook);
+    //TODO: sheet parliament
+    //TODO: sheet dun
+    //TODO: sheet zone
+    sheetFhType(workbook);
+    sheetFhOwnership(workbook);
+    sheetFhStatus(workbook);
+
+    // Save file
+    await workbook.xlsx.writeFile(pathExport);
+}
+
+
+async function sheetBalai(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Balai");
+
+    const [
+        johor,
+        kedah,
+        kelantan,
+        kualaLumpur,
+        labuan,
+        melaka,
+        negeriSembilan,
+        pahang,
+        perak,
+        perlis,
+        pulauPinang,
+        putrajaya,
+        sabah,
+        sarawak,
+        selangor,
+        terengganu,
+    ] = await Promise.all([
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/johor.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/kedah.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/kelantan.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/kuala-lumpur.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/labuan.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/melaka.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/negeri-sembilan.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/pahang.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/perak.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/perlis.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/pulau-pinang.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/putrajaya.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/sabah.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/sarawak.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/selangor.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/terengganu.json")
+    ]);
+
+    const allStations = [
+        ...johor.data,
+        ...kedah.data,
+        ...kelantan.data,
+        ...kualaLumpur.data,
+        ...labuan.data,
+        ...melaka.data,
+        ...negeriSembilan.data,
+        ...pahang.data,
+        ...perak.data,
+        ...perlis.data,
+        ...pulauPinang.data,
+        ...putrajaya.data,
+        ...sabah.data,
+        ...sarawak.data,
+        ...selangor.data,
+        ...terengganu.data,
+    ];
+
+    sheet.columns = [
+        { header: "Kod", key: "station_code", width: 8 },
+        { header: "Nama Balai", key: "name", width: 20 },
+    ];
+
+    const listData = allStations.map(item => ({
+        station_code: item.station_code,
+        name: item.name,
+    }));
+
+    listData.forEach((row) => sheet.addRow(row));
+
+}
+
+async function sheetState(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Negeri");
+    const [
+        state
+    ] = await Promise.all([
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/list-state.json")
+    ]);
+
+    sheet.columns = [
+        { header: "Kod", key: "state2_code", width: 8 },
+        { header: "Negeri", key: "name", width: 20 },
+    ];
+
+    const listData = state.data.map(item => ({
+        state2_code: item.state2_code,
+        name: item.name,
+    }));
+
+    listData.forEach((row) => sheet.addRow(row));
+}
+
+async function sheetFhType(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Jenis Pili");
+
+    const listData: {
+        id: number,
+        secondary_id: string,
+        type_my: string,
+    }[] = [
+            {
+                id: 1,
+                secondary_id: "QBe0on",
+                type_my: "Pillar",
+            },
+            {
+                id: 2,
+                secondary_id: "AubNNB",
+                type_my: "Ground",
+            },
+            {
+                id: 3,
+                secondary_id: "Ofi1Gk",
+                type_my: "Pressurized",
+            },
+        ];
+
+    sheet.columns = [
+        { header: "ID", key: "secondary_id", width: 8 },
+        { header: "Jenis", key: "type_my", width: 20 },
+    ];
+
+    const listModifiedData = listData.map(item => ({
+        secondary_id: item.secondary_id,
+        type_my: item.type_my,
+    }));
+
+    listModifiedData.forEach((row) => sheet.addRow(row));
+
+}
+
+async function sheetFhOwnership(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Pemilikan Pili");
+
+    const listData: {
+        id: number,
+        secondary_id: string,
+        type_my: string,
+    }[] = [
+            {
+                id: 2,
+                secondary_id: "zA7khz",
+                type_my: "Swasta",
+            },
+            {
+                id: 1,
+                secondary_id: "Q64vaT",
+                type_my: "Awam",
+            }
+        ];
+
+    sheet.columns = [
+        { header: "ID", key: "secondary_id", width: 8 },
+        { header: "Jenis", key: "type_my", width: 20 },
+    ];
+
+    const listModifiedData = listData.map(item => ({
+        secondary_id: item.secondary_id,
+        type_my: item.type_my,
+    }));
+
+    listModifiedData.forEach((row) => sheet.addRow(row));
+}
+
+async function sheetDistrict(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Daerah");
+
+    const [
+        johor,
+        kedah,
+        kelantan,
+        melaka,
+        negeriSembilan,
+        pahang,
+        perak,
+        perlis,
+        pulauPinang,
+        sabah,
+        sarawak,
+        selangor,
+        terengganu,
+    ] = await Promise.all([
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/johor.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/kedah.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/kelantan.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/melaka.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/negeri-sembilan.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/pahang.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/perak.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/perlis.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/pulau-pinang.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/sabah.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/sarawak.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/selangor.json"),
+        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/terengganu.json")
+    ]);
+
+    const allDistricts = [
+        ...johor.data,
+        ...kedah.data,
+        ...kelantan.data,
+        ...melaka.data,
+        ...negeriSembilan.data,
+        ...pahang.data,
+        ...perak.data,
+        ...perlis.data,
+        ...pulauPinang.data,
+        ...sabah.data,
+        ...sarawak.data,
+        ...selangor.data,
+        ...terengganu.data,
+    ];
+
+    sheet.columns = [
+        { header: "ID", key: "id", width: 8 },
+        { header: "Jenis", key: "name", width: 20 },
+    ];
+
+    const listModifiedData = allDistricts.map(item => ({
+        id: item.id,
+        name: item.name,
+    }));
+
+    listModifiedData.forEach((row) => sheet.addRow(row));
+}
+//TODO: sheet parliament
+//TODO: sheet dun
+
+
+async function sheetFhStatus(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Status Pili");
+
+    const listData: {
+        id: number,
+        secondary_id: string,
+        name_my: string,
+    }[] = [
+            {
+                id: 1,
+                secondary_id: "gbBdiu",
+                name_my: "Berfungsi",
+            },
+            {
+                id: 2,
+                secondary_id: "QpwEtN",
+                name_my: "Terjejas",
+            },
+            {
+                id: 3,
+                secondary_id: "B33hni",
+                name_my: "Tidak Berfungsi",
+            },
+            // {
+            //     "id": 4,
+            //     "name": "Installation",
+            //     "name_my": "Pemasangan",
+            //     "create_at": "2025-07-22T03:17:09.481Z",
+            //     "hex_color": null
+            // }
+        ];
+
+    sheet.columns = [
+        { header: "ID", key: "secondary_id", width: 8 },
+        { header: "Jenis", key: "name_my", width: 20 },
+    ];
+
+    const listModifiedData = listData.map(item => ({
+        secondary_id: item.secondary_id,
+        name_my: item.name_my,
+    }));
+
+    listModifiedData.forEach((row) => sheet.addRow(row));
+
 }
