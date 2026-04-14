@@ -1,8 +1,10 @@
 import * as ExcelJS from 'exceljs';
+import fs from "fs/promises";
+import path from "path";
 
 
 
-export async function updateCSVListFhOnWater(){
+export async function updateCSVListFhOnWater() {
     const path = 'C:/Users/Fitrie/Desktop/etc-FHIS/others/fh-on-water.csv';
     const listData = await readCsv(path);
 
@@ -27,7 +29,7 @@ export async function updateCSVListFhOnWater(){
         import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/terengganu.json'),
     ]);
 
-    
+
     const listStation = rawListStation.flatMap(item => item.data);
 
 
@@ -105,4 +107,36 @@ export async function writeCsv(
 
     // Write to file
     await workbook.csv.writeFile(path);
+}
+
+export async function csvToJSONFile(
+    filePath: string
+): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.csv.readFile(filePath);
+
+    const worksheet = workbook.worksheets[0];
+    const rows: Record<string, string>[] = [];
+    let headers: string[] = [];
+
+    worksheet.eachRow((row, rowNumber) => {
+        const values = (row.values as ExcelJS.CellValue[]).slice(1); // remove index 0 (ExcelJS pads it)
+
+        if (rowNumber === 1) {
+            headers = values.map((v) => String(v ?? ""));
+        } else {
+            const obj: Record<string, string> = {};
+            headers.forEach((header, i) => {
+                obj[header] = String(values[i] ?? "");
+            });
+            rows.push(obj);
+        }
+    });
+
+    const outputPath = path.join(
+        path.dirname(filePath),
+        `${path.basename(filePath, path.extname(filePath))}.json`
+    );
+
+    await fs.writeFile(outputPath, JSON.stringify(rows, null, 2), "utf-8");
 }

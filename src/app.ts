@@ -1,6 +1,6 @@
 import { insertDataOwsCSVToDB, readCsvOwsAndConvertToFhisDBOwsCsv } from './services/ows/csvService';
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
-import { updateCSVListFhOnWater } from './services/utils/csvService';
+import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvService';
 import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './services/firehydrant/fh-util';
 
@@ -35,9 +35,11 @@ import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './se
 
 
 // readCSVSPPBTemanPili()
-// generateTemplateImportFireHydrantCSV();
-createFHImportLookup("C:/Users/Fitrie/Downloads/fh-import-lookup.xlsx");
+generateTemplateImportFireHydrantCSV();
+// createFHImportLookup("C:/Users/Fitrie/Downloads/fh-import-lookup.xlsx");
 
+
+// csvToJSONFile("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/csv/senarai-daerah.csv");
 
 
 

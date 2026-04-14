@@ -1,5 +1,6 @@
 import { writeCsv } from "../../services/utils/csvService";
 import * as ExcelJS from 'exceljs';
+import fs from "fs/promises";
 
 export async function generateTemplateImportFireHydrantCSV() {
     const listDataForCSV = [
@@ -137,17 +138,17 @@ export async function generateTemplateImportFireHydrantCSV() {
              * Leave blank if null
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Daerah"]: null,
+            ["ID Daerah"]: "81466726-037a-4e92-81cf-72316eb8d446",
             /**
              * parliament_id
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Parlimen"]: 1,
+            ["ID Parlimen"]: "P.001",
             /**
              * assemblymen_id
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID DUN"]: "",
+            ["ID DUN"]: "N.01",
             /**
              * zone_id
              * Map out this id, dont use direct db id,use like 1,2,3
@@ -159,21 +160,21 @@ export async function generateTemplateImportFireHydrantCSV() {
              * dont use direct db id
              * Map out this id, use like 1,2,3
              */
-            ["ID Jenis Pili"]: 1,
+            ["ID Jenis Pili"]: "QBe0on",
             /**
              * ownership_id
              * Map out the id
              * dont use direct db id
              * Map out this id, use like 1,2,3
              */
-            ["ID Jenis Pemilikan Pili"]: 1,
+            ["ID Jenis Pemilikan Pili"]: "zA7khz",
             /**
              * status_id
              * Map out the id
              * dont use direct db id
              * Map out this id, use like 1,2,3
              */
-            ["ID Status Pili"]: 1,
+            ["ID Status Pili"]: "gbBdiu",
 
 
 
@@ -197,9 +198,9 @@ export async function createFHImportLookup(
     await sheetBalai(workbook);
     await sheetState(workbook);
     await sheetDistrict(workbook);
-    //TODO: sheet parliament
-    //TODO: sheet dun
-    //TODO: sheet zone
+    await sheetParlimen(workbook);
+    await sheetDUN(workbook);
+    await sheetZone(workbook);
     sheetFhType(workbook);
     sheetFhOwnership(workbook);
     sheetFhStatus(workbook);
@@ -211,73 +212,24 @@ export async function createFHImportLookup(
 
 async function sheetBalai(workbook: ExcelJS.Workbook) {
     const sheet = workbook.addWorksheet("Balai");
-
-    const [
-        johor,
-        kedah,
-        kelantan,
-        kualaLumpur,
-        labuan,
-        melaka,
-        negeriSembilan,
-        pahang,
-        perak,
-        perlis,
-        pulauPinang,
-        putrajaya,
-        sabah,
-        sarawak,
-        selangor,
-        terengganu,
-    ] = await Promise.all([
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/johor.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/kedah.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/kelantan.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/kuala-lumpur.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/labuan.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/melaka.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/negeri-sembilan.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/pahang.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/perak.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/perlis.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/pulau-pinang.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/putrajaya.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/sabah.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/sarawak.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/selangor.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/station/terengganu.json")
-    ]);
-
-    const allStations = [
-        ...johor.data,
-        ...kedah.data,
-        ...kelantan.data,
-        ...kualaLumpur.data,
-        ...labuan.data,
-        ...melaka.data,
-        ...negeriSembilan.data,
-        ...pahang.data,
-        ...perak.data,
-        ...perlis.data,
-        ...pulauPinang.data,
-        ...putrajaya.data,
-        ...sabah.data,
-        ...sarawak.data,
-        ...selangor.data,
-        ...terengganu.data,
-    ];
+    const raw = await fs.readFile(
+        "C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-balai.json",
+        "utf-8"
+    );
+    const listData = JSON.parse(raw);
 
     sheet.columns = [
         { header: "Kod", key: "station_code", width: 8 },
         { header: "Nama Balai", key: "name", width: 20 },
     ];
+    sheet.getRow(1).font = { bold: true };
 
-    const listData = allStations.map(item => ({
+    const listModifiedData = listData.map((item: any) => ({
         station_code: item.station_code,
         name: item.name,
     }));
 
-    listData.forEach((row) => sheet.addRow(row));
+    listModifiedData.forEach((row: any) => sheet.addRow(row));
 
 }
 
@@ -293,6 +245,7 @@ async function sheetState(workbook: ExcelJS.Workbook) {
         { header: "Kod", key: "state2_code", width: 8 },
         { header: "Negeri", key: "name", width: 20 },
     ];
+    sheet.getRow(1).font = { bold: true };
 
     const listData = state.data.map(item => ({
         state2_code: item.state2_code,
@@ -300,6 +253,72 @@ async function sheetState(workbook: ExcelJS.Workbook) {
     }));
 
     listData.forEach((row) => sheet.addRow(row));
+}
+
+async function sheetParlimen(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Parlimen");
+    const raw = await fs.readFile(
+        "C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-parlimen.json",
+        "utf-8"
+    );
+    const listData = JSON.parse(raw);
+
+    sheet.columns = [
+        { header: "Kod", key: "parliament_code", width: 8 },
+        { header: "Nama", key: "name", width: 20 },
+    ];
+    sheet.getRow(1).font = { bold: true };
+
+    const listModifiedData = listData.map((item: any) => ({
+        parliament_code: item.parliament_code,
+        name: item.name,
+    }));
+
+    listModifiedData.forEach((row: any) => sheet.addRow(row));
+}
+
+async function sheetDUN(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("DUN");
+    const raw = await fs.readFile(
+        "C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-dun.json",
+        "utf-8"
+    );
+    const listData = JSON.parse(raw);
+
+    sheet.columns = [
+        { header: "Kod", key: "dun_code", width: 8 },
+        { header: "Nama", key: "name", width: 20 },
+    ];
+    sheet.getRow(1).font = { bold: true };
+
+    const listModifiedData = listData.map((item: any) => ({
+        dun_code: item.dun_code,
+        name: item.name,
+    }));
+
+    listModifiedData.forEach((row: any) => sheet.addRow(row));
+}
+
+async function sheetZone(workbook: ExcelJS.Workbook) {
+    const sheet = workbook.addWorksheet("Zon");
+    const raw = await fs.readFile(
+        "C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/zone.json",
+        "utf-8"
+    );
+    const listData = JSON.parse(raw);
+
+    sheet.columns = [
+        { header: "ID", key: "id", width: 8 },
+        { header: "Nama", key: "name", width: 20 },
+    ];
+    sheet.getRow(1).font = { bold: true };
+
+    const listModifiedData = listData.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+    }));
+
+    listModifiedData.forEach((row: any) => sheet.addRow(row));
 }
 
 async function sheetFhType(workbook: ExcelJS.Workbook) {
@@ -331,6 +350,7 @@ async function sheetFhType(workbook: ExcelJS.Workbook) {
         { header: "ID", key: "secondary_id", width: 8 },
         { header: "Jenis", key: "type_my", width: 20 },
     ];
+    sheet.getRow(1).font = { bold: true };
 
     const listModifiedData = listData.map(item => ({
         secondary_id: item.secondary_id,
@@ -365,6 +385,7 @@ async function sheetFhOwnership(workbook: ExcelJS.Workbook) {
         { header: "ID", key: "secondary_id", width: 8 },
         { header: "Jenis", key: "type_my", width: 20 },
     ];
+    sheet.getRow(1).font = { bold: true };
 
     const listModifiedData = listData.map(item => ({
         secondary_id: item.secondary_id,
@@ -376,67 +397,25 @@ async function sheetFhOwnership(workbook: ExcelJS.Workbook) {
 
 async function sheetDistrict(workbook: ExcelJS.Workbook) {
     const sheet = workbook.addWorksheet("Daerah");
-
-    const [
-        johor,
-        kedah,
-        kelantan,
-        melaka,
-        negeriSembilan,
-        pahang,
-        perak,
-        perlis,
-        pulauPinang,
-        sabah,
-        sarawak,
-        selangor,
-        terengganu,
-    ] = await Promise.all([
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/johor.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/kedah.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/kelantan.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/melaka.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/negeri-sembilan.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/pahang.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/perak.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/perlis.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/pulau-pinang.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/sabah.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/sarawak.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/selangor.json"),
-        import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/postman/district/terengganu.json")
-    ]);
-
-    const allDistricts = [
-        ...johor.data,
-        ...kedah.data,
-        ...kelantan.data,
-        ...melaka.data,
-        ...negeriSembilan.data,
-        ...pahang.data,
-        ...perak.data,
-        ...perlis.data,
-        ...pulauPinang.data,
-        ...sabah.data,
-        ...sarawak.data,
-        ...selangor.data,
-        ...terengganu.data,
-    ];
+    const raw = await fs.readFile(
+        "C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-daerah.json",
+        "utf-8"
+    );
+    const listData = JSON.parse(raw);
 
     sheet.columns = [
         { header: "ID", key: "id", width: 8 },
         { header: "Jenis", key: "name", width: 20 },
     ];
+    sheet.getRow(1).font = { bold: true };
 
-    const listModifiedData = allDistricts.map(item => ({
+    const listModifiedData = listData.map((item: any) => ({
         id: item.id,
         name: item.name,
     }));
 
-    listModifiedData.forEach((row) => sheet.addRow(row));
+    listModifiedData.forEach((row: any) => sheet.addRow(row));
 }
-//TODO: sheet parliament
-//TODO: sheet dun
 
 
 async function sheetFhStatus(workbook: ExcelJS.Workbook) {
@@ -475,6 +454,7 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
         { header: "ID", key: "secondary_id", width: 8 },
         { header: "Jenis", key: "name_my", width: 20 },
     ];
+    sheet.getRow(1).font = { bold: true };
 
     const listModifiedData = listData.map(item => ({
         secondary_id: item.secondary_id,
@@ -483,4 +463,9 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 
     listModifiedData.forEach((row) => sheet.addRow(row));
 
+}
+
+
+async function mappingLookupWithData(){
+    //TODO: do mapping for import data
 }
