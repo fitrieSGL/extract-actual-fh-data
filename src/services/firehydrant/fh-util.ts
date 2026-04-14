@@ -2,6 +2,40 @@ import { writeCsv } from "../../services/utils/csvService";
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
 
+const mappingFhKey = {
+    no_pili: "No Pili Bomba",
+    code_pili: "Kod Pili",
+    isHaveMainPipe: "Ada Paip Utama (YA / TIDAK)",
+    mainPipeSize: "Saiz Paip Utama",
+    distanceFromNearestStation: "Balai Bomba Terdekat (km)",
+    distanceFromNearestFireHydrant: "Dari Pili Bomba Terdekat (meter)",
+    distanceFromOpenWaterSources: "Dari Sumber Air Terbuka (meter)",
+    waterProduction: "Pengeluaran Air (LPM)",
+    staticWaterPressure: "Tekanan Air Statik (Bar)",
+    currentWaterPressure: "Tekanan Air Semasa (Bar)",
+    totalPopulation: "Jumlah Populasi",
+    totalPremises: "Jumlah Premis",
+    totalBuildingOver4floors: "Bangunan melebihi 4 tingkat",
+    is_has_industry_risk: "Risiko Industri? (YA / TIDAK)",
+    is_has_housing_risk: "Risiko Perumahan? (YA / TIDAK)",
+    is_has_school_risk: "Risiko Sekolah? (YA / TIDAK)",
+    otherRisks:"Risiko lain yang wujud",
+    address: "Alamat",
+    latitude: "Latitud",
+    longitude: "Longitud",
+    postcode: "Poskod",
+    installation_date: "Tarikh Pemasangan",
+    external_station_id: "ID Balai",
+    state_id: "ID Negeri",
+    district_id: "ID Daerah",
+    parliament_id: "ID Parlimen",
+    assemblymen_id: "ID DUN",
+    zone_id: "ID Zon",
+    fhtype_id: "ID Jenis Pili",
+    ownership_id: "ID Jenis Pemilikan Pili",
+    status_id: "ID Status Pili",   
+}
+
 export async function generateTemplateImportFireHydrantCSV() {
     const listDataForCSV = [
         {
@@ -9,176 +43,176 @@ export async function generateTemplateImportFireHydrantCSV() {
              * no_pili
              * !Required
              */
-            ["No Pili Bomba"]: "BJG-H-262",
+            [mappingFhKey.no_pili]: "BJG-H-262",
             /**
              * code_pili
              * !Required
              */
-            ["Code Pili"]: "BJG",
+            [mappingFhKey.code_pili]: "BJG",
             /**
              * isHaveMainPipe
              * Leave blank if null
              * YA / TIDAK
              */
-            ["Ada Paip Utama (YA / TIDAK)"]: "YA",
+            [mappingFhKey.isHaveMainPipe]: "YA",
             /**
              * mainPipeSize
              * Leave blank if null
              */
-            ["Saiz Paip Utama"]: 8,
+            [mappingFhKey.mainPipeSize]: 8,
             /**
              * distanceFromNearestStation
              * Leave blank if null
              */
-            ["Balai Bomba Terdekat (km)"]: 22,
+            [mappingFhKey.distanceFromNearestStation]: 22,
             /**
              * distanceFromNearestFireHydrant
              * Leave blank if null
              */
-            ["Dari Pili Bomba Terdekat (meter)"]: 2,
+            [mappingFhKey.distanceFromNearestStation]: 2,
             /**
              * distanceFromOpenWaterSources
              * Leave blank if null
              */
-            ["Dari Sumber Air Terbuka (meter)"]: 2,
+            [mappingFhKey.distanceFromOpenWaterSources]: 2,
             /**
              * waterProduction
              * Leave blank if null
              */
-            ["Pengeluaran Air (LPM)"]: 2,
+            [mappingFhKey.waterProduction]: 2,
             /**
              * staticWaterPressure
              * Leave blank if null
              */
-            ["Tekanan Air Statik (Bar)"]: 2,
+            [mappingFhKey.staticWaterPressure]: 2,
             /**
              * currentWaterPressure
              * Leave blank if null
              */
-            ["Tekanan Air Semasa (Bar)"]: 2,
+            [mappingFhKey.currentWaterPressure]: 2,
             /**
              * totalPopulation
              * Leave blank if null
              */
-            ["Jumlah Populasi"]: 2,
+            [mappingFhKey.totalPopulation]: 2,
             /**
              * totalPremises
              * Leave blank if null
              */
-            ["Jumlah Premis"]: 2,
+            [mappingFhKey.totalPremises]: 2,
             /**
              * totalBuildingOver4floors
              * Leave blank if null
              * YA / TIDAK
              */
-            ["Bangunan melebihi 4 tingkat"]: null,
+            [mappingFhKey.totalBuildingOver4floors]: null,
             /**
              * is_has_industry_risk
              * !Required
              * YA / TIDAK
              */
-            ["Risiko Industri? (YA / TIDAK)"]: "YA",
+            [mappingFhKey.is_has_industry_risk]: "YA",
             /**
              * is_has_housing_risk
              * !Required
              * YA / TIDAK
              */
-            ["Risiko Perumahan? (YA / TIDAK)"]: "TIDAK",
+            [mappingFhKey.is_has_housing_risk]: "TIDAK",
             /**
              * is_has_school_risk
              * !Required
              * YA / TIDAK
              */
-            ["Risiko Sekolah? (YA / TIDAK)"]: "TIDAK",
+            [mappingFhKey.is_has_school_risk]: "TIDAK",
             /**
              * otherRisks
              * Leave blank if null
              */
-            ["Risiko lain yang wujud"]: "test",
+            [mappingFhKey.otherRisks]: "test",
             /**
              * address
              * !Required
              */
-            ["Alamat"]: "4429, Jalan Negeri Sembilan Selatan, Bukit Persekutuan, 50480 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur",
+            [mappingFhKey.address]: "4429, Jalan Negeri Sembilan Selatan, Bukit Persekutuan, 50480 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur",
             /**
              * latitude
              * Leave blank if null
              */
-            ["Latitud"]: 3.135237,
+            [mappingFhKey.latitude]: 3.135237,
             /**
              * longitude
              * Leave blank if null
              */
-            ["Longitud"]: 101.678021,
+            [mappingFhKey.longitude]: 101.678021,
             /**
              * postcode
              * Leave blank if null
              */
-            ["Poskod"]: "50480",
+            [mappingFhKey.postcode]: "50480",
             /**
              * installation_date
              * Format DD/MM/YYYY HH:MM
              * Leave blank if null
              */
-            ["Tarikh Pemasangan"]: "26/01/2026 13:20",
+            [mappingFhKey.installation_date]: "26/01/2026 13:20",
             /**
              * external_station_id
              * ! Required
              * Format Station code
              */
-            ["ID Balai"]: "BJG",
+            [mappingFhKey.external_station_id]: "BJG",
             /**
              * state_id
              * ! Required
              * Format State code
              */
-            ["ID Negeri"]: "PJ",
+            [mappingFhKey.state_id]: "PJ",
             /**
              * district_id
              * Leave blank if null
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Daerah"]: "81466726-037a-4e92-81cf-72316eb8d446",
+            [mappingFhKey.district_id]: "81466726-037a-4e92-81cf-72316eb8d446",
             /**
              * parliament_id
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Parlimen"]: "P.001",
+            [mappingFhKey.parliament_id]: "P.001",
             /**
              * assemblymen_id
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID DUN"]: "N.01",
+            [mappingFhKey.assemblymen_id]: "N.01",
             /**
              * zone_id
              * Map out this id, dont use direct db id,use like 1,2,3
              */
-            ["ID Zon"]: 1,
+            [mappingFhKey.zone_id]: 1,
             /**
              * fhtype_id
              * Map out the id
              * dont use direct db id
              * Map out this id, use like 1,2,3
              */
-            ["ID Jenis Pili"]: "QBe0on",
+            [mappingFhKey.fhtype_id]: "QBe0on",
             /**
              * ownership_id
              * Map out the id
              * dont use direct db id
              * Map out this id, use like 1,2,3
              */
-            ["ID Jenis Pemilikan Pili"]: "zA7khz",
+            [mappingFhKey.ownership_id]: "zA7khz",
             /**
              * status_id
              * Map out the id
              * dont use direct db id
              * Map out this id, use like 1,2,3
              */
-            ["ID Status Pili"]: "gbBdiu",
+            [mappingFhKey.status_id]: "gbBdiu",
 
 
 
-
+            
             // "created_by": 249, // Admin
             //TODO: generate in DB
             // "location": "POINT (101.678021 3.135237)" 
