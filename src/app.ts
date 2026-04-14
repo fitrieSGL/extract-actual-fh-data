@@ -35,12 +35,11 @@ import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './se
 
 
 // readCSVSPPBTemanPili()
-generateTemplateImportFireHydrantCSV();
-// createFHImportLookup("C:/Users/Fitrie/Downloads/fh-import-lookup.xlsx");
+// generateTemplateImportFireHydrantCSV();
+createFHImportLookup("C:/Users/Fitrie/Downloads/fh-import-lookup.xlsx");
 
 
 // csvToJSONFile("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/csv/senarai-daerah.csv");
-
 
 
 

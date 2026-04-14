@@ -19,7 +19,7 @@ const mappingFhKey = {
     is_has_industry_risk: "Risiko Industri? (YA / TIDAK)",
     is_has_housing_risk: "Risiko Perumahan? (YA / TIDAK)",
     is_has_school_risk: "Risiko Sekolah? (YA / TIDAK)",
-    otherRisks:"Risiko lain yang wujud",
+    otherRisks: "Risiko lain yang wujud",
     address: "Alamat",
     latitude: "Latitud",
     longitude: "Longitud",
@@ -33,7 +33,7 @@ const mappingFhKey = {
     zone_id: "ID Zon",
     fhtype_id: "ID Jenis Pili",
     ownership_id: "ID Jenis Pemilikan Pili",
-    status_id: "ID Status Pili",   
+    status_id: "ID Status Pili",
 }
 
 export async function generateTemplateImportFireHydrantCSV() {
@@ -212,7 +212,7 @@ export async function generateTemplateImportFireHydrantCSV() {
 
 
 
-            
+
             // "created_by": 249, // Admin
             //TODO: generate in DB
             // "location": "POINT (101.678021 3.135237)" 
@@ -438,13 +438,13 @@ async function sheetDistrict(workbook: ExcelJS.Workbook) {
     const listData = JSON.parse(raw);
 
     sheet.columns = [
-        { header: "ID", key: "id", width: 8 },
-        { header: "Jenis", key: "name", width: 20 },
+        { header: "ID", key: "secondary_id", width: 8 },
+        { header: "Nama", key: "name", width: 20 },
     ];
     sheet.getRow(1).font = { bold: true };
 
     const listModifiedData = listData.map((item: any) => ({
-        id: item.id,
+        secondary_id: item.secondary_id,
         name: item.name,
     }));
 
@@ -500,6 +500,28 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 }
 
 
-async function mappingLookupWithData(){
+
+// export async function generateDistrictSecondary() {
+//     const raw = await fs.readFile(
+//         "C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-daerah.json",
+//         "utf-8"
+//     );
+//     const listData = JSON.parse(raw);
+
+//     const randomLetters = (len: number) =>
+//         Array.from(crypto.randomBytes(len))
+//             .map(b => String.fromCharCode(97 + (b % 26)))
+//             .join("");
+//     const listModifiedData = listData.map((item: any) => ({
+//         ...item,
+//         secondary_id: randomLetters(6)
+//     }));
+
+//     await writeCsv("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/csv/senarai-daerah.csv", listModifiedData);
+
+// }
+
+
+async function mappingLookupWithData() {
     //TODO: do mapping for import data
 }
