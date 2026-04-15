@@ -3,6 +3,7 @@ import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehy
 import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvService';
 import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './services/firehydrant/fh-util';
+import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 
 
 //* Run here
@@ -35,11 +36,16 @@ import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './se
 
 
 // readCSVSPPBTemanPili()
-// generateTemplateImportFireHydrantCSV();
-createFHImportLookup("C:/Users/Fitrie/Downloads/fh-import-lookup.xlsx");
-
 
 // csvToJSONFile("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/csv/senarai-daerah.csv");
+
+
+// generateTemplateImportFireHydrantCSV();
+// createFHImportLookup("C:/Users/Fitrie/Downloads/fh-import-lookup.xlsx");
+
+// generateTemplateImportOwsCSV();
+// createOWSImportLookup("C:/Users/Fitrie/Downloads/ows-import-lookup.xlsx");
+
 
 
 
