@@ -5,6 +5,7 @@ import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './services/firehydrant/fh-util';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 import { formatSQLFirehydrantTemanPili } from './services/utils/format-sql';
+import { generateTemplateImportTemanPiliCSV } from './services/temanpili/temanpili-util';
 
 
 //* Run here
@@ -49,6 +50,6 @@ import { formatSQLFirehydrantTemanPili } from './services/utils/format-sql';
 
 
 // formatSQLFirehydrantTemanPili();
-
+// generateTemplateImportTemanPiliCSV()
 
 
