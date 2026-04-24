@@ -4,6 +4,7 @@ import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvServi
 import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './services/firehydrant/fh-util';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
+import { formatSQLFirehydrantTemanPili } from './services/utils/format-sql';
 
 
 //* Run here
@@ -47,6 +48,7 @@ import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/
 // createOWSImportLookup("C:/Users/Fitrie/Downloads/ows-import-lookup.xlsx");
 
 
+// formatSQLFirehydrantTemanPili();
 
 
 
