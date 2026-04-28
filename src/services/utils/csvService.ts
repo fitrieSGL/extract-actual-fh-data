@@ -140,3 +140,36 @@ export async function csvToJSONFile(
 
     await fs.writeFile(outputPath, JSON.stringify(rows, null, 2), "utf-8");
 }
+
+
+export async function readExcelFile(
+    filePath: string,
+    sheetName: string
+): Promise<Record<string, unknown>[]> {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+
+    const worksheet = workbook.getWorksheet(sheetName);
+    if (!worksheet) {
+        throw new Error(`Sheet "${sheetName}" not found`);
+    }
+
+    const rows: Record<string, unknown>[] = [];
+    let headers: string[] = [];
+
+    worksheet.eachRow((row, rowNumber) => {
+        const values = (row.values as ExcelJS.CellValue[]).slice(1);
+
+        if (rowNumber === 1) {
+            headers = values.map((v) => String(v ?? ''));
+        } else {
+            const rowObj: Record<string, unknown> = {};
+            headers.forEach((header, index) => {
+                rowObj[header] = values[index] ?? null;
+            });
+            rows.push(rowObj);
+        }
+    });
+
+    return rows;
+}

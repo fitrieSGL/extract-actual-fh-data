@@ -125,12 +125,12 @@ export async function insertTemanPiliWithTransaction(payload: TemanPiliType) {
         await linkFireHydrantTemanPili(client, {
             temanpili_id: temanPiliId,
             no_pili,
-        })
+        });
 
         // Commit transaction
         await client.query('COMMIT');
 
-        console.log('OWS inserted:', insertResult.rows[0]);
+        console.log('Teman Pili inserted:', insertResult.rows[0]);
         return insertResult.rows[0];
 
     } catch (error) {

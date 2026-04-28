@@ -1,4 +1,9 @@
-import { writeCsv } from "../../services/utils/csvService";
+import { readExcelFile, writeCsv } from "../../services/utils/csvService";
+import { z } from "zod";
+import dayjs from "dayjs";
+// import { insertTemanPiliWithTransaction } from "db/temanpili/db";
+import { insertTemanPiliWithTransaction } from "../../db/temanpili/db";
+
 
 const mappingTemanPiliKey = {
     no_pili: "No Pili Bomba (*Required)",
@@ -18,7 +23,52 @@ const mappingTemanPiliKey = {
     office_district_id: "ID Daerah Pejabat",
     gender: "Jantina (Lelaki / Perempuan / Tidak Diketahui)(*Required)",
     status: "Status (Aktif / Tidak Aktif)(*Required)"
+    //TODO: add created_at
 };
+
+const itemImportTemanPiliSchema = z.object({
+    no_pili: z.string(),
+    name: z.string(),
+    no_ic: z.union([
+        z.number().transform(() => null),
+        z.string()
+            .nullish()
+            .transform((val) => val?.replace(/-/g, "") ?? null),
+    ]),
+    email: z.email().nullish(),
+    phone_no: z.string().nullish(),
+    address: z.string(),
+    postcode: z.string().nullish(),
+    station_id: z.string(),
+    state_id: z.string(),
+    district_id: z.string().nullish(),
+    occupation: z.string().nullish(),
+    office_address: z.string().nullish(),
+    office_postcode: z.string().nullish(),
+    office_state_id: z.string().nullish(),
+    office_district_id: z.string().nullish(),
+    gender: z.enum(['Lelaki', 'Perempuan', 'Tidak Diketahui']).transform((val) => {
+        const map: Record<string, string> = {
+            'Lelaki': 'a17c4e19-35e5-4ca1-9d4c-7513bca1af26',
+            'Perempuan': '836378d9-8a6e-4642-9e10-92c73ae8260e',
+            'Tidak Diketahui': 'ff6f1c90-ce81-4754-8458-14e2efe031b7',
+        };
+        return map[val];
+    }),
+    status: z.enum(['Aktif', 'Tidak Aktif']).transform((val) => {
+        const map: Record<string, string> = {
+            'Aktif': '484701f0-4d73-4a08-a11d-54ffcee87f75',
+            'Tidak Aktif': '4734bc60-7339-4d18-8326-25d78d389a4d',
+        };
+        return map[val];
+    }),
+    created_at: z.string().default(dayjs('2011-01-01').format('YYYY-MM-DD HH:mm:ss')),
+});
+const listItemImportTemanPiliSchema = z.array(itemImportTemanPiliSchema);
+
+function validateListItemImportTemanPiliSchema(listData: any) {
+    return listItemImportTemanPiliSchema.parse(listData);
+}
 
 export async function generateTemplateImportTemanPiliCSV() {
     const listDataForCSV = [
@@ -45,3 +95,71 @@ export async function generateTemplateImportTemanPiliCSV() {
 
     await writeCsv("C:/Users/Fitrie/Downloads/template-teman-pili-import.csv", listDataForCSV);
 }
+
+
+export async function importTemanPiliToDB() {
+    const listData = await readExcelFile('C:/Users/Fitrie/Downloads/template-teman-pili-import-bbpkkbsl.xlsx', 'template-teman-pili-import');
+    // Flip mapping: { "No Pili Bomba (*Required)": "no_pili", ... }
+    const reversedMapping = Object.fromEntries(
+        Object.entries(mappingTemanPiliKey).map(([key, value]) => [value, key])
+    );
+
+    // Remap each row from Excel headers to camelCase keys
+    const remappedData = listData.map(item => {
+        return Object.fromEntries(
+            Object.entries(item).map(([excelHeader, value]) => {
+                const mappedKey = reversedMapping[excelHeader] ?? excelHeader;
+                return [mappedKey, value];
+            })
+        );
+    });
+
+    const validatedData = validateListItemImportTemanPiliSchema(remappedData);
+    const listExtractedData = await Promise.all(
+        validatedData.map(async (item) => {
+            return {
+                ...item,
+                state_id: await getState(item.state_id),
+                station_id: await getStation(item.station_id),
+            }
+        })
+    );
+
+    // console.log(listExtractedData);
+
+    for (const item of listExtractedData) {
+        await insertTemanPiliWithTransaction({
+            station_id: item.station_id,
+            no_pili: item.no_pili,
+            name: item.name,
+            no_ic: item.no_ic as any,
+            email: item.email as any,
+            phone_no: item.phone_no as any,
+            address: item.address,
+            postcode: item.postcode as any,
+            state_id: item.state_id as string,
+            district_id: item.district_id as any,
+            occupation: item.occupation as any,
+            office_address: item.office_address as any,
+            office_postcode: item.office_postcode as any,
+            office_state_id: item.office_state_id as any,
+            office_district_id: item.office_district_id as any,
+            gender: item.gender,
+            status: item.status,
+            created_at: item.created_at,
+        });
+    }
+}
+
+export async function getState(stateCode: string) {
+    const stateImport = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-negeri.json');
+    const listState = stateImport.data;
+
+    return listState.find(item => item.state2_code === stateCode)?.id ?? null;
+}
+
+export async function getStation(stationCode: string) {
+    const { default: stationList } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-balai.json');
+    return stationList.find(item => item.station_code === stationCode)?.id ?? null;
+}
+

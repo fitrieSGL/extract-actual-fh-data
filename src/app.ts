@@ -1,11 +1,11 @@
 import { insertDataOwsCSVToDB, readCsvOwsAndConvertToFhisDBOwsCsv } from './services/ows/csvService';
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
 import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvService';
-import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
+// import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup } from './services/firehydrant/fh-util';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 import { formatSQLFirehydrantTemanPili } from './services/utils/format-sql';
-import { generateTemplateImportTemanPiliCSV } from './services/temanpili/temanpili-util';
+// import { generateTemplateImportTemanPiliCSV, importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 
 //* Run here
@@ -53,3 +53,4 @@ import { generateTemplateImportTemanPiliCSV } from './services/temanpili/temanpi
 // generateTemplateImportTemanPiliCSV()
 
 
+// importTemanPiliToDB()
