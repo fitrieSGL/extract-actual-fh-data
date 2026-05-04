@@ -5,7 +5,7 @@ import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvServi
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup, importFHToDB } from './services/firehydrant/fh-util';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 import { formatSQLFirehydrantTemanPili } from './services/utils/format-sql';
-// import { generateTemplateImportTemanPiliCSV, importTemanPiliToDB } from './services/temanpili/temanpili-util';
+import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 
 //* Run here

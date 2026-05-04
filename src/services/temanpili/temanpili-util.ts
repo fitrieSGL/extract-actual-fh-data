@@ -1,4 +1,4 @@
-import { readExcelFile, writeCsv } from "../../services/utils/csvService";
+import { readCsv, readExcelFile, writeCsv } from "../../services/utils/csvService";
 import { z } from "zod";
 import dayjs from "dayjs";
 // import { insertTemanPiliWithTransaction } from "db/temanpili/db";
@@ -22,8 +22,8 @@ const mappingTemanPiliKey = {
     office_state_id: "ID Negeri Pejabat",
     office_district_id: "ID Daerah Pejabat",
     gender: "Jantina (Lelaki / Perempuan / Tidak Diketahui)(*Required)",
-    status: "Status (Aktif / Tidak Aktif)(*Required)"
-    //TODO: add created_at
+    status: "Status (Aktif / Tidak Aktif)(*Required)",
+    created_at: "Tarikh Daftar (*Required)"
 };
 
 const itemImportTemanPiliSchema = z.object({
@@ -38,7 +38,7 @@ const itemImportTemanPiliSchema = z.object({
     email: z.email().nullish(),
     phone_no: z.string().nullish(),
     address: z.string(),
-    postcode: z.string().nullish(),
+    postcode: z.number().nullish(),
     station_id: z.string(),
     state_id: z.string(),
     district_id: z.string().nullish(),
@@ -62,7 +62,11 @@ const itemImportTemanPiliSchema = z.object({
         };
         return map[val];
     }),
-    created_at: z.string().default(dayjs('2011-01-01').format('YYYY-MM-DD HH:mm:ss')),
+    created_at: z.string().nullish().transform(val => {
+        if (!val) return null;
+        const parsed = dayjs(val, 'D/M/YYYY H:mm');
+        return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : null;
+    }),
 });
 const listItemImportTemanPiliSchema = z.array(itemImportTemanPiliSchema);
 
@@ -98,8 +102,7 @@ export async function generateTemplateImportTemanPiliCSV() {
 
 
 export async function importTemanPiliToDB() {
-    const listData = await readExcelFile('C:/Users/Fitrie/Downloads/template-teman-pili-import-bbpkkbsl.xlsx', 'template-teman-pili-import');
-    // Flip mapping: { "No Pili Bomba (*Required)": "no_pili", ... }
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/teman-pili-import-BBP KLANG SELATAN.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingTemanPiliKey).map(([key, value]) => [value, key])
     );
@@ -146,7 +149,7 @@ export async function importTemanPiliToDB() {
             office_district_id: item.office_district_id as any,
             gender: item.gender,
             status: item.status,
-            created_at: item.created_at,
+            created_at: item.created_at as any,
         });
     }
 }
