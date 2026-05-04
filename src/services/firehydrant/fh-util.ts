@@ -1,6 +1,9 @@
-import { writeCsv } from "../../services/utils/csvService";
+import dayjs from "dayjs";
+import { insertFirehydrantWithTransaction, insertFirehydrantWithTransactionV2 } from "../../db/firehydrant/db";
+import { readCsv, readExcelFile, writeCsv } from "../../services/utils/csvService";
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
+import z from "zod";
 
 const mappingFhKey = {
     no_pili: "No Pili Bomba",
@@ -34,6 +37,50 @@ const mappingFhKey = {
     fhtype_id: "ID Jenis Pili",
     ownership_id: "ID Jenis Pemilikan Pili",
     status_id: "ID Status Pili",
+}
+
+const itemImportFHSchema = z.object({
+    no_pili: z.string(),
+    code_pili: z.string(),
+    isHaveMainPipe: z.enum(['YA', 'TIDAK']).nullish().transform(val => val == null ? val : val === 'YA'),
+    mainPipeSize: z.number().nullish(),
+    distanceFromNearestStation: z.number().nullish(),
+    distanceFromNearestFireHydrant: z.number().nullish(),
+    distanceFromOpenWaterSources: z.number().nullish(),
+    waterProduction: z.number().nullish(),
+    staticWaterPressure: z.number().nullish(),
+    currentWaterPressure: z.number().nullish(),
+    totalPopulation: z.number().nullish(),
+    totalPremises: z.number().nullish(),
+    totalBuildingOver4floors: z.number().nullish().transform(val => val ?? null),
+    is_has_industry_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
+    is_has_housing_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
+    is_has_school_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
+    otherRisks: z.string(),
+    address: z.string(),
+    latitude: z.number().nullish(),
+    longitude: z.number().nullish(),
+    postcode: z.number().nullish(),
+    installation_date: z.string().nullish().transform(val => {
+        if (!val) return null;
+        const parsed = dayjs(val, 'D/M/YYYY H:mm');
+        return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : null;
+    }),
+    external_station_id: z.string(),
+    state_id: z.string(),
+    district_id: z.string().nullish(),
+    parliament_id: z.string().nullish(),
+    assemblymen_id: z.string().nullish(),
+    zone_id: z.number().nullish(),
+    fhtype_id: z.string().nullish(),
+    ownership_id: z.string().nullish(),
+    status_id: z.string().nullish(),
+});
+type itemImportFHType = z.infer<typeof itemImportFHSchema>;
+const listItemImportFHSchema = z.array(itemImportFHSchema);
+
+function validateListItemImportFHSchema(listData: any) {
+    return listItemImportFHSchema.parse(listData);
 }
 
 export async function generateTemplateImportFireHydrantCSV() {
@@ -522,6 +569,145 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 // }
 
 
-async function mappingLookupWithData() {
-    //TODO: do mapping for import data
+
+export async function importFHToDB() {
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/PILI BOMBA BBP KLANG SELATAN.csv');
+    const reversedMapping = Object.fromEntries(
+        Object.entries(mappingFhKey).map(([key, value]) => [value, key])
+    );
+
+    // Remap each row from Excel headers to camelCase keys
+    const remappedData = listData.map(item => {
+        return Object.fromEntries(
+            Object.entries(item).map(([excelHeader, value]) => {
+                const mappedKey = reversedMapping[excelHeader] ?? excelHeader;
+                return [mappedKey, value];
+            })
+        );
+    });
+
+    const validatedData = validateListItemImportFHSchema(remappedData);
+    const listExtractedData = await Promise.all(
+        validatedData.map(async (item: itemImportFHType) => {
+            return {
+                ...item,
+                state_id: await getState(item.state_id),
+                external_station_id: await getStation(item.external_station_id),
+                district_id: await getDistrict(item.district_id as any),
+                parliament_id: await getParliament(item.parliament_id as any),
+                assemblymen_id: await getAssemblymen(item.assemblymen_id as any),
+                status_id: await getStatus(item.status_id as any),
+                fhtype_id: await getFhType(item.fhtype_id as any),
+                ownership_id: await getOwnership(item.ownership_id as any),
+            }
+        })
+    );
+
+    // console.log("listExtractedData: ", listExtractedData);
+
+    for (const item of listExtractedData) {
+        await insertFirehydrantWithTransactionV2({
+            no_pili: item.no_pili,
+            code_pili: item.code_pili,
+            isHaveMainPipe: item.isHaveMainPipe,
+            mainPipeSize: item.mainPipeSize,
+            distanceFromNearestStation: item.distanceFromNearestStation,
+            distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
+            distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
+            waterProduction: item.waterProduction,
+            staticWaterPressure: item.staticWaterPressure,
+            currentWaterPressure: item.currentWaterPressure,
+            totalPopulation: item.totalPopulation,
+            totalPremises: item.totalPremises,
+            totalBuildingOver4floors: item.totalBuildingOver4floors,
+            is_has_industry_risk: item.is_has_industry_risk,
+            is_has_housing_risk: item.is_has_housing_risk,
+            is_has_school_risk: item.is_has_school_risk,
+            otherRisks: item.otherRisks,
+            address: item.address,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            postcode: item.postcode,
+            installation_date: item.installation_date,
+            external_station_id: item.external_station_id!,
+            state_id: item.state_id!,
+            district_id: item.district_id,
+            parliament_id: item.parliament_id,
+            assemblymen_id: item.assemblymen_id,
+            zone_id: item.zone_id,
+            fhtype_id: item.fhtype_id as any,
+            ownership_id: item.ownership_id as any,
+            status_id: item.status_id as any,
+            created_by: 249,
+        });
+    }
 }
+
+
+export async function getState(stateCode: string) {
+    const stateImport = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-negeri.json');
+    const listState = stateImport.data;
+
+    return listState.find(item => item.state2_code === stateCode)?.id ?? null;
+}
+
+export async function getStation(stationCode: string) {
+    const { default: stationList } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-balai.json');
+    const result = stationList.find(item => item.station_code === stationCode)?.id ?? null;
+    return result;
+}
+
+export async function getDistrict(secondary_id: string) {
+    const { default: districts } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-daerah.json');
+    return districts.find(item => item.secondary_id === secondary_id)?.id ?? null;
+}
+
+export async function getParliament(secondary_id: string) {
+    const { default: parliaments } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-parlimen.json');
+    return parliaments.find(item => item.parliament_code === secondary_id)?.id ?? null;
+}
+
+export async function getAssemblymen(secondary_id: string) {
+    const { default: DUNS } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-dun.json');
+    return DUNS.find(item => item.dun_code === secondary_id)?.id ?? null;
+}
+
+export async function getStatus(secondary_id: string) {
+    switch (secondary_id) {
+        case "gbBdiu": {
+            return 1;
+        }
+        case "QpwEtN": {
+            return 2;
+        }
+        case "B33hni": {
+            return 3;
+        }
+    }
+}
+
+export async function getFhType(secondary_id: string) {
+    switch (secondary_id) {
+        case "QBe0on": {
+            return 1;
+        }
+        case "AubNNB": {
+            return 2;
+        }
+        case "Ofi1Gk": {
+            return 3;
+        }
+    }
+}
+
+export async function getOwnership(secondary_id: string) {
+    switch (secondary_id) {
+        case "zA7khz": {
+            return 1;
+        }
+        case "Q64vaT": {
+            return 2;
+        }
+    }
+}
+
