@@ -65,6 +65,19 @@ export async function insertTemanPiliWithTransaction(payload: TemanPiliType) {
         // Begin transaction
         await client.query('BEGIN');
 
+        const station_code = no_pili && String(no_pili).trim() !== '#N/A' ? String(no_pili).split("-")[0] : null;
+
+        // Acquire advisory lock for this station+year BEFORE inserting,
+        // so concurrent imports for the same station serialize on membership_no generation.
+        // Released automatically on COMMIT/ROLLBACK.
+        if (station_code) {
+            const year = dayjs(created_at).year();
+            await client.query(
+                `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+                [`teman_pili_membership:${station_code}:${year}`]
+            );
+        }
+
         const insertQuery = `
             INSERT INTO teman_pili_bomba (
                 external_station_id,
@@ -115,7 +128,6 @@ export async function insertTemanPiliWithTransaction(payload: TemanPiliType) {
         ]);
 
         const temanPiliId = insertResult.rows[0].id;
-        const station_code = no_pili && String(no_pili).trim() !== '#N/A' ? String(no_pili).split("-")[0] : null;
         await updateTemanPiliMembershipNo(client, {
             created_at,
             station_code: station_code,
@@ -145,7 +157,6 @@ export async function insertTemanPiliWithTransaction(payload: TemanPiliType) {
 }
 
 
-
 async function updateTemanPiliMembershipNo(
     client: PoolClient,
     payload: {
@@ -160,14 +171,19 @@ async function updateTemanPiliMembershipNo(
 
     const year = dayjs(payload.created_at).year();
 
-    // Count how many members already exist for this station + year
-    const countQuery = `
-        SELECT COUNT(*) as total
+    // Find the highest existing sequence for this station+year and add 1.
+    // Safe under concurrency because caller holds pg_advisory_xact_lock
+    // on (station_code, year) for the duration of the transaction.
+    const maxQuery = `
+        SELECT COALESCE(
+            MAX(CAST(SPLIT_PART(membership_no, '-', 3) AS INTEGER)),
+            0
+        ) AS max_seq
         FROM teman_pili_bomba
         WHERE membership_no LIKE $1
     `;
-    const countResult = await client.query(countQuery, [`${payload.station_code}-${year}-%`]);
-    const sequence = parseInt(countResult.rows[0].total) + 1;
+    const maxResult = await client.query(maxQuery, [`${payload.station_code}-${year}-%`]);
+    const sequence = parseInt(maxResult.rows[0].max_seq) + 1;
 
     const membershipNo = `${payload.station_code}-${year}-${sequence.toString().padStart(3, "0")}`;
 

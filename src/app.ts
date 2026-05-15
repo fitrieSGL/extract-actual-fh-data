@@ -53,5 +53,5 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 // generateTemplateImportTemanPiliCSV()
 
 
-// importTemanPiliToDB()
+importTemanPiliToDB();
 // importFHToDB();

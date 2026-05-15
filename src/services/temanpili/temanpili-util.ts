@@ -36,7 +36,7 @@ const itemImportTemanPiliSchema = z.object({
             .transform((val) => val?.replace(/-/g, "") ?? null),
     ]),
     email: z.email().nullish(),
-    phone_no: z.string().nullish(),
+    phone_no: z.number().nullish(),
     address: z.string(),
     postcode: z.number().nullish(),
     station_id: z.string(),
@@ -64,8 +64,12 @@ const itemImportTemanPiliSchema = z.object({
     }),
     created_at: z.string().nullish().transform(val => {
         if (!val) return null;
-        const parsed = dayjs(val, 'D/M/YYYY H:mm');
-        return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : null;
+
+        const withTime = dayjs(val, 'D/M/YYYY H:mm');
+        if (withTime.isValid()) return withTime.format('YYYY-MM-DD HH:mm:ss');
+
+        const dateOnly = dayjs(val, 'D/M/YYYY');
+        return dateOnly.isValid() ? dateOnly.format('YYYY-MM-DD 00:00:00') : null;
     }),
 });
 const listItemImportTemanPiliSchema = z.array(itemImportTemanPiliSchema);
@@ -73,6 +77,12 @@ const listItemImportTemanPiliSchema = z.array(itemImportTemanPiliSchema);
 function validateListItemImportTemanPiliSchema(listData: any) {
     return listItemImportTemanPiliSchema.parse(listData);
 }
+
+type TemanPiliItem = z.infer<typeof itemImportTemanPiliSchema>
+
+
+
+
 
 export async function generateTemplateImportTemanPiliCSV() {
     const listDataForCSV = [
@@ -102,7 +112,7 @@ export async function generateTemplateImportTemanPiliCSV() {
 
 
 export async function importTemanPiliToDB() {
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/teman-pili-import-BBP KLANG SELATAN.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/teman-pili-import- BBP CBY.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingTemanPiliKey).map(([key, value]) => [value, key])
     );
@@ -128,30 +138,64 @@ export async function importTemanPiliToDB() {
         })
     );
 
+    const [listUnique, listDuplicate] = getDuplicateTemanPili(listExtractedData as any);
+    // console.log("listUnique: ", listUnique);
+    // console.log("listDuplicate: ", listDuplicate);
     // console.log(listExtractedData);
 
+    // for (const item of listUnique) {
+    //     await insertTemanPiliWithTransaction({
+    //         station_id: item.station_id,
+    //         no_pili: item.no_pili,
+    //         name: item.name,
+    //         no_ic: item.no_ic as any,
+    //         email: item.email as any,
+    //         phone_no: item.phone_no as any,
+    //         address: item.address,
+    //         postcode: item.postcode as any,
+    //         state_id: item.state_id as string,
+    //         district_id: item.district_id as any,
+    //         occupation: item.occupation as any,
+    //         office_address: item.office_address as any,
+    //         office_postcode: item.office_postcode as any,
+    //         office_state_id: item.office_state_id as any,
+    //         office_district_id: item.office_district_id as any,
+    //         gender: item.gender,
+    //         status: item.status,
+    //         created_at: item.created_at as any,
+    //     });
+    // }
+}
+
+export function getDuplicateTemanPili(
+    listExtractedData: TemanPiliItem[]
+): [
+    TemanPiliItem[], 
+    TemanPiliItem[]
+] {
+    const seenForUnique = new Set<string>();
+    const listUnique: TemanPiliItem[] = [];
+
+    const seen = new Set<string>();
+    const duplicateNames = new Set<string>();
+    const listDuplicate: TemanPiliItem[] = [];
+
     for (const item of listExtractedData) {
-        await insertTemanPiliWithTransaction({
-            station_id: item.station_id,
-            no_pili: item.no_pili,
-            name: item.name,
-            no_ic: item.no_ic as any,
-            email: item.email as any,
-            phone_no: item.phone_no as any,
-            address: item.address,
-            postcode: item.postcode as any,
-            state_id: item.state_id as string,
-            district_id: item.district_id as any,
-            occupation: item.occupation as any,
-            office_address: item.office_address as any,
-            office_postcode: item.office_postcode as any,
-            office_state_id: item.office_state_id as any,
-            office_district_id: item.office_district_id as any,
-            gender: item.gender,
-            status: item.status,
-            created_at: item.created_at as any,
-        });
+        // Build listUnique: take the first object for each name
+        if (!seenForUnique.has(item.name)) {
+            seenForUnique.add(item.name);
+            listUnique.push(item);
+        }
+
+        // Build listDuplicate: take the second occurrence of each duplicated name
+        if (seen.has(item.name) && !duplicateNames.has(item.name)) {
+            duplicateNames.add(item.name);
+            listDuplicate.push(item);
+        }
+        seen.add(item.name);
     }
+
+    return [listUnique, listDuplicate];
 }
 
 export async function getState(stateCode: string) {
