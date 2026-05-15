@@ -571,7 +571,7 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 
 
 export async function importFHToDB() {
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/PILI BOMBA BBP KLANG SELATAN.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/fire-hydrant-import-BBP CBY.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingFhKey).map(([key, value]) => [value, key])
     );
@@ -603,7 +603,8 @@ export async function importFHToDB() {
         })
     );
 
-    // console.log("listExtractedData: ", listExtractedData);
+    // const listFilteredData = await excludeListFh(listExtractedData as any);
+    // console.log("listFilteredData: ", listFilteredData);
 
     for (const item of listExtractedData) {
         await insertFirehydrantWithTransactionV2({
@@ -642,6 +643,14 @@ export async function importFHToDB() {
         });
     }
 }
+
+
+// export async function excludeListFh(listExtractedData: itemImportFHType[]) {
+//     const { data } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/others/list-cby-fh-existing.json');
+//     const listFhNo = data.map(item => item.no_pili);
+
+//     return listExtractedData.filter(item => !listFhNo.includes(item.no_pili));
+// }
 
 
 export async function getState(stateCode: string) {
@@ -702,10 +711,10 @@ export async function getFhType(secondary_id: string) {
 
 export async function getOwnership(secondary_id: string) {
     switch (secondary_id) {
-        case "zA7khz": {
+        case "Q64vaT": {
             return 1;
         }
-        case "Q64vaT": {
+        case "zA7khz": {
             return 2;
         }
     }
