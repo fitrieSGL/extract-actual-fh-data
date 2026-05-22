@@ -49,7 +49,7 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 // createOWSImportLookup("C:/Users/Fitrie/Downloads/ows-import-lookup.xlsx");
 
 
-// formatSQLFirehydrantTemanPili();
+formatSQLFirehydrantTemanPili();
 // formatSQLDeleteFireHydrant();
 // generateTemplateImportTemanPiliCSV()
 

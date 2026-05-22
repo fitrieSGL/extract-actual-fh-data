@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 
 export async function formatSQLFirehydrantTemanPili() {
-    const rawData = await import("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/others/firehydrant_temanpili.json");
+    const rawData = await import("C:/Users/Fitrie/Desktop/etc-FHIS/others/list-fhtemanpili-cby.json");
     const listData = rawData.data;
 
     const listFormattedData = listData.map((item, index) => {
