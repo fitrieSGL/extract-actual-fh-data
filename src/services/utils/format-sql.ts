@@ -23,3 +23,21 @@ export async function formatSQLFirehydrantTemanPili() {
 
     await fs.writeFile('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/others/test.txt', sql, 'utf-8');
 }
+
+
+export async function formatSQLDeleteFireHydrant() {
+    const rawData = await import("C:/Users/Fitrie/Downloads/fh-to-delete.json");
+    const listData = rawData.default;
+
+    const values = listData
+        .map((item) => `'${item.no_pili}'`)
+        .join(',\n        ');
+
+    const sql = `DELETE FROM fire_hydrant\nWHERE no_pili IN (\n        ${values}\n);\n`;
+
+    await fs.writeFile(
+        'C:/Users/Fitrie/Downloads/fh-to-delete.txt',
+        sql,
+        'utf-8'
+    );
+}

@@ -4,7 +4,7 @@ import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvServi
 // import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup, importFHToDB } from './services/firehydrant/fh-util';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
-import { formatSQLFirehydrantTemanPili } from './services/utils/format-sql';
+import { formatSQLFirehydrantTemanPili, formatSQLDeleteFireHydrant } from './services/utils/format-sql';
 import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 
@@ -39,7 +39,7 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 // readCSVSPPBTemanPili()
 
-// csvToJSONFile("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/csv/senarai-daerah.csv");
+// csvToJSONFile("C:/Users/Fitrie/Downloads/fh-to-delete.csv");
 
 
 // generateTemplateImportFireHydrantCSV();
@@ -50,8 +50,9 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 
 // formatSQLFirehydrantTemanPili();
+// formatSQLDeleteFireHydrant();
 // generateTemplateImportTemanPiliCSV()
 
 
-importTemanPiliToDB();
+// importTemanPiliToDB();
 // importFHToDB();
