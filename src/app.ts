@@ -53,7 +53,7 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 // formatSQLDeleteFireHydrant();
 // formatSQLFireOnWaterToUpdate();
 // formatSQLFireOutsideMalaysiaToUpdate();
-formatSQLOpenWaterSourceOutsideMalaysiaToUpdate();
+// formatSQLOpenWaterSourceOutsideMalaysiaToUpdate();
 
 // generateTemplateImportTemanPiliCSV()
 
