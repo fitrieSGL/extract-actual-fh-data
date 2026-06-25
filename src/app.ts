@@ -3,8 +3,9 @@ import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehy
 import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvService';
 // import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
 import { generateTemplateImportFireHydrantCSV, createFHImportLookup, importFHToDB } from './services/firehydrant/fh-util';
+import { importFHExcelToDB } from './services/firehydrant/import-fh-excel';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
-import { formatSQLFirehydrantTemanPili, formatSQLDeleteFireHydrant, formatSQLFireOnWaterToUpdate, formatSQLFireOutsideMalaysiaToUpdate, formatSQLOpenWaterSourceOutsideMalaysiaToUpdate } from './services/utils/format-sql';
+import { formatSQLFirehydrantTemanPili, formatSQLDeleteFireHydrant, formatSQLFireOnWaterToUpdate, formatSQLFireOutsideMalaysiaToUpdate, formatSQLOpenWaterSourceOutsideMalaysiaToUpdate, formatSQLFhOnRiverToUpdate } from './services/utils/format-sql';
 import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 
@@ -54,9 +55,11 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 // formatSQLFireOnWaterToUpdate();
 // formatSQLFireOutsideMalaysiaToUpdate();
 // formatSQLOpenWaterSourceOutsideMalaysiaToUpdate();
+// formatSQLFhOnRiverToUpdate();
 
 // generateTemplateImportTemanPiliCSV()
 
 
 // importTemanPiliToDB();
 // importFHToDB();
+importFHExcelToDB();

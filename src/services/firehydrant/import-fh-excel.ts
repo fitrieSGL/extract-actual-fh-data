@@ -4,10 +4,11 @@ import { readCsv, readExcelFile, writeCsv } from "../../services/utils/csvServic
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
 import z from "zod";
+import { readXlsx } from "../../services/utils/excelService";
 
 const mappingFhKey = {
-    no_pili: "No Pili Bomba (*Required)",
-    code_pili: "Kod Pili (*Required)",
+    no_pili: "No Pili Bomba", //* Required
+    code_pili: "Kod Pili", //* Required
     isHaveMainPipe: "Ada Paip Utama (YA / TIDAK)",
     mainPipeSize: "Saiz Paip Utama",
     distanceFromNearestStation: "Balai Bomba Terdekat (km)",
@@ -19,17 +20,17 @@ const mappingFhKey = {
     totalPopulation: "Jumlah Populasi",
     totalPremises: "Jumlah Premis",
     totalBuildingOver4floors: "Bangunan melebihi 4 tingkat",
-    is_has_industry_risk: "Risiko Industri? (YA / TIDAK) (*Required)",
-    is_has_housing_risk: "Risiko Perumahan? (YA / TIDAK) (*Required)",
-    is_has_school_risk: "Risiko Sekolah? (YA / TIDAK) (*Required)",
-    otherRisks: "Risiko lain yang wujud (*Required)",
-    address: "Alamat (*Required)",
+    is_has_industry_risk: "Risiko Industri? (YA / TIDAK)", //* Required
+    is_has_housing_risk: "Risiko Perumahan? (YA / TIDAK)", //* Required
+    is_has_school_risk: "Risiko Sekolah? (YA / TIDAK)", //* Required
+    otherRisks: "Risiko lain yang wujud", //* Required
+    address: "Alamat", //* Required
     latitude: "Latitud",
     longitude: "Longitud",
     postcode: "Poskod",
     installation_date: "Tarikh Pemasangan",
-    external_station_id: "ID Balai (*Required)",
-    state_id: "ID Negeri (*Required)",
+    external_station_id: "ID Balai", //* Required
+    state_id: "ID Negeri", //* Required
     district_id: "ID Daerah",
     parliament_id: "ID Parlimen",
     assemblymen_id: "ID DUN",
@@ -569,9 +570,8 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 // }
 
 
-
-export async function importFHToDB() {
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/fire-hydrant-import-BBP CBY.csv');
+export async function importFHExcelToDB() {
+    const listData = await readXlsx('C:/Users/Fitrie/Downloads/template-fire-hydrant-import.xlsx');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingFhKey).map(([key, value]) => [value, key])
     );
@@ -585,6 +585,8 @@ export async function importFHToDB() {
             })
         );
     });
+
+    // console.log(remappedData.slice(0, 30));
 
     const validatedData = validateListItemImportFHSchema(remappedData);
     const listExtractedData = await Promise.all(
@@ -603,8 +605,9 @@ export async function importFHToDB() {
         })
     );
 
-    // const listFilteredData = await excludeListFh(listExtractedData as any);
-    // console.log("listFilteredData: ", listFilteredData);
+    // console.log("listExtractedData: ", listExtractedData.slice(0, 10));
+    // console.log("listExtractedData: ", listExtractedData.filter(item => item.assemblymen_id));
+    // console.log("length: ", listExtractedData.length);
 
     for (const item of listExtractedData) {
         await insertFirehydrantWithTransactionV2({
@@ -644,13 +647,6 @@ export async function importFHToDB() {
     }
 }
 
-
-// export async function excludeListFh(listExtractedData: itemImportFHType[]) {
-//     const { data } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/others/list-cby-fh-existing.json');
-//     const listFhNo = data.map(item => item.no_pili);
-
-//     return listExtractedData.filter(item => !listFhNo.includes(item.no_pili));
-// }
 
 
 export async function getState(stateCode: string) {
