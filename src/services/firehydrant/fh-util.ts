@@ -617,59 +617,52 @@ export async function importFHToDB() {
         })
     );
 
-    const listDataDontHaveStationId = listExtractedData.filter(item => item.external_station_id);
-    console.log("listDataDontHaveStationId length: ", listDataDontHaveStationId.length);
-    // console.log("listDataDontHaveStationId length: ", listDataDontHaveStationId.length);
-    // console.log("listDataDontHaveStationId data: ", listDataDontHaveStationId.map(item => ({
-    //     no_pili: item.no_pili,
-    //     external_station_id: item.external_station_id
-    // })));
-    // console.log("List station code missing: ", [...new Set(listDataDontHaveStationId.map(item => item.code_pili))]);
+    //* Make list data unique by no pili
+    const seen = new Set<string>();
+    const uniqueListExtractedData = listExtractedData
+        .filter(item => item.external_station_id)
+        .filter(item => {
+            if (seen.has(item.no_pili)) return false;
+            seen.add(item.no_pili);
+            return true;
+        });
 
-    // //* Make list data unique by no pili
-    // const seen = new Set<string>();
-    // const uniqueListExtractedData = listExtractedData.filter(item => {
-    //     if (seen.has(item.no_pili)) return false;
-    //     seen.add(item.no_pili);
-    //     return true;
-    // });
-
-    // for (const item of uniqueListExtractedData) {
-    //     await insertFirehydrantWithTransactionV2({
-    //         no_pili: item.no_pili,
-    //         code_pili: item.code_pili,
-    //         isHaveMainPipe: item.isHaveMainPipe,
-    //         mainPipeSize: item.mainPipeSize,
-    //         distanceFromNearestStation: item.distanceFromNearestStation,
-    //         distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
-    //         distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
-    //         waterProduction: item.waterProduction,
-    //         staticWaterPressure: item.staticWaterPressure,
-    //         currentWaterPressure: item.currentWaterPressure,
-    //         totalPopulation: item.totalPopulation,
-    //         totalPremises: item.totalPremises,
-    //         totalBuildingOver4floors: item.totalBuildingOver4floors,
-    //         is_has_industry_risk: item.is_has_industry_risk,
-    //         is_has_housing_risk: item.is_has_housing_risk,
-    //         is_has_school_risk: item.is_has_school_risk,
-    //         otherRisks: item.otherRisks,
-    //         address: item.address,
-    //         latitude: item.latitude,
-    //         longitude: item.longitude,
-    //         postcode: item.postcode,
-    //         installation_date: item.installation_date,
-    //         external_station_id: item.external_station_id!,
-    //         state_id: item.state_id!,
-    //         district_id: item.district_id,
-    //         parliament_id: item.parliament_id,
-    //         assemblymen_id: item.assemblymen_id,
-    //         zone_id: item.zone_id,
-    //         fhtype_id: item.fhtype_id as any,
-    //         ownership_id: item.ownership_id as any,
-    //         status_id: item.status_id as any,
-    //         created_by: 249,
-    //     });
-    // }
+    for (const item of uniqueListExtractedData) {
+        await insertFirehydrantWithTransactionV2({
+            no_pili: item.no_pili,
+            code_pili: item.code_pili,
+            isHaveMainPipe: item.isHaveMainPipe,
+            mainPipeSize: item.mainPipeSize,
+            distanceFromNearestStation: item.distanceFromNearestStation,
+            distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
+            distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
+            waterProduction: item.waterProduction,
+            staticWaterPressure: item.staticWaterPressure,
+            currentWaterPressure: item.currentWaterPressure,
+            totalPopulation: item.totalPopulation,
+            totalPremises: item.totalPremises,
+            totalBuildingOver4floors: item.totalBuildingOver4floors,
+            is_has_industry_risk: item.is_has_industry_risk,
+            is_has_housing_risk: item.is_has_housing_risk,
+            is_has_school_risk: item.is_has_school_risk,
+            otherRisks: item.otherRisks,
+            address: item.address,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            postcode: item.postcode,
+            installation_date: item.installation_date,
+            external_station_id: item.external_station_id!,
+            state_id: item.state_id!,
+            district_id: item.district_id,
+            parliament_id: item.parliament_id,
+            assemblymen_id: item.assemblymen_id,
+            zone_id: item.zone_id,
+            fhtype_id: item.fhtype_id as any,
+            ownership_id: item.ownership_id as any,
+            status_id: item.status_id as any,
+            created_by: 249,
+        });
+    }
 }
 
 
