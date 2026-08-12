@@ -1,5 +1,7 @@
+import { parse } from 'csv-parse';
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
+import { createReadStream } from 'fs';
 import path from "path";
 
 
@@ -48,37 +50,57 @@ export async function updateCSVListFhOnWater() {
     await writeCsv(pathTransformData, listTransformedData);
 }
 
+//* Old function, slow to read large csv
+// export async function readCsv(
+//     path: string
+// ): Promise<any[]> {
+//     const workbook = new ExcelJS.Workbook();
+//     await workbook.csv.readFile(path);
 
-export async function readCsv(
-    path: string
-): Promise<any[]> {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.csv.readFile(path);
+//     const worksheet = workbook.getWorksheet(1);
 
-    const worksheet = workbook.getWorksheet(1);
+//     const listData: any = [];
+//     let headers: any = [];
 
-    const listData: any = [];
-    let headers: any = [];
+//     worksheet?.eachRow((row: any, rowNumber) => {
+//         if (rowNumber === 1) {
+//             // Store headers
+//             headers = row.values.slice(1); // slice(1) to remove undefined first element
+//         } else {
+//             // Process data rows
+//             const rowData: any = {};
+//             const values = row.values.slice(1); // slice(1) to remove undefined first element
 
-    worksheet?.eachRow((row: any, rowNumber) => {
-        if (rowNumber === 1) {
-            // Store headers
-            headers = row.values.slice(1); // slice(1) to remove undefined first element
-        } else {
-            // Process data rows
-            const rowData: any = {};
-            const values = row.values.slice(1); // slice(1) to remove undefined first element
+//             headers.forEach((header: any, index: number) => {
+//                 rowData[header] = values[index];
+//             });
 
-            headers.forEach((header: any, index: number) => {
-                rowData[header] = values[index];
-            });
+//             listData.push(rowData);
+//         }
+//     });
 
-            listData.push(rowData);
-        }
-    });
+//     return listData;
 
-    return listData;
+// }
 
+export async function readCsv(path: string): Promise<any[]> {
+    const records: any[] = [];
+    const parser = createReadStream(path).pipe(
+        parse({
+            columns: true,
+            skip_empty_lines: true,
+            trim: true,
+            cast: (value) => {
+                if (value === '') return null;
+                if (value !== '' && !isNaN(Number(value))) return Number(value);
+                return value;
+            },
+        })
+    );
+    for await (const record of parser) {
+        records.push(record);
+    }
+    return records;
 }
 
 

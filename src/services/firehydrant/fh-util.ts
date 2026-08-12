@@ -4,6 +4,7 @@ import { readCsv, readExcelFile, writeCsv } from "../../services/utils/csvServic
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
 import z from "zod";
+import { getAssemblymen, getDistrict, getFhType, getOwnership, getParliament, getState, getStation, getStatus } from "./util/helper-id";
 
 const mappingFhKey = {
     no_pili: "No Pili Bomba (*Required)",
@@ -39,6 +40,17 @@ const mappingFhKey = {
     status_id: "ID Status Pili",
 }
 
+const cleanedLatLngProcess = z.preprocess((val) => {
+    if (val === null || val === undefined) {
+        return val
+    };
+    if (typeof val === 'string') {
+        const parsed = Number(val);
+        return isNaN(parsed) ? null : parsed; // parse failed -> null instead of leaving the bad string
+    }
+    return val;
+}, z.number().nullish());
+
 const itemImportFHSchema = z.object({
     no_pili: z.string(),
     code_pili: z.string(),
@@ -57,9 +69,9 @@ const itemImportFHSchema = z.object({
     is_has_housing_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
     is_has_school_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
     otherRisks: z.string(),
-    address: z.string(),
-    latitude: z.number().nullish(),
-    longitude: z.number().nullish(),
+    address: z.string().nullish().transform(val => val ?? "-"),
+    latitude: cleanedLatLngProcess,
+    longitude: cleanedLatLngProcess,
     postcode: z.number().nullish(),
     installation_date: z.string().nullish().transform(val => {
         if (!val) return null;
@@ -571,20 +583,22 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 
 
 export async function importFHToDB() {
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/fire-hydrant-import-BBP CBY.csv');
+    // const listData = await readCsv('C:/Users/Fitrie/Downloads/fire-hydrant-import-BBP CBY.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-not-in-db.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingFhKey).map(([key, value]) => [value, key])
     );
 
     // Remap each row from Excel headers to camelCase keys
-    const remappedData = listData.map(item => {
-        return Object.fromEntries(
-            Object.entries(item).map(([excelHeader, value]) => {
-                const mappedKey = reversedMapping[excelHeader] ?? excelHeader;
-                return [mappedKey, value];
-            })
-        );
-    });
+    const remappedData = listData
+        .map(item => {
+            return Object.fromEntries(
+                Object.entries(item).map(([excelHeader, value]) => {
+                    const mappedKey = reversedMapping[excelHeader] ?? excelHeader;
+                    return [mappedKey, value];
+                })
+            );
+        });
 
     const validatedData = validateListItemImportFHSchema(remappedData);
     const listExtractedData = await Promise.all(
@@ -603,127 +617,95 @@ export async function importFHToDB() {
         })
     );
 
-    // const listFilteredData = await excludeListFh(listExtractedData as any);
-    // console.log("listFilteredData: ", listFilteredData);
+    const listDataDontHaveStationId = listExtractedData.filter(item => item.external_station_id);
+    console.log("listDataDontHaveStationId length: ", listDataDontHaveStationId.length);
+    // console.log("listDataDontHaveStationId length: ", listDataDontHaveStationId.length);
+    // console.log("listDataDontHaveStationId data: ", listDataDontHaveStationId.map(item => ({
+    //     no_pili: item.no_pili,
+    //     external_station_id: item.external_station_id
+    // })));
+    // console.log("List station code missing: ", [...new Set(listDataDontHaveStationId.map(item => item.code_pili))]);
 
-    for (const item of listExtractedData) {
-        await insertFirehydrantWithTransactionV2({
-            no_pili: item.no_pili,
-            code_pili: item.code_pili,
-            isHaveMainPipe: item.isHaveMainPipe,
-            mainPipeSize: item.mainPipeSize,
-            distanceFromNearestStation: item.distanceFromNearestStation,
-            distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
-            distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
-            waterProduction: item.waterProduction,
-            staticWaterPressure: item.staticWaterPressure,
-            currentWaterPressure: item.currentWaterPressure,
-            totalPopulation: item.totalPopulation,
-            totalPremises: item.totalPremises,
-            totalBuildingOver4floors: item.totalBuildingOver4floors,
-            is_has_industry_risk: item.is_has_industry_risk,
-            is_has_housing_risk: item.is_has_housing_risk,
-            is_has_school_risk: item.is_has_school_risk,
-            otherRisks: item.otherRisks,
-            address: item.address,
-            latitude: item.latitude,
-            longitude: item.longitude,
-            postcode: item.postcode,
-            installation_date: item.installation_date,
-            external_station_id: item.external_station_id!,
-            state_id: item.state_id!,
-            district_id: item.district_id,
-            parliament_id: item.parliament_id,
-            assemblymen_id: item.assemblymen_id,
-            zone_id: item.zone_id,
-            fhtype_id: item.fhtype_id as any,
-            ownership_id: item.ownership_id as any,
-            status_id: item.status_id as any,
-            created_by: 249,
-        });
-    }
+    // //* Make list data unique by no pili
+    // const seen = new Set<string>();
+    // const uniqueListExtractedData = listExtractedData.filter(item => {
+    //     if (seen.has(item.no_pili)) return false;
+    //     seen.add(item.no_pili);
+    //     return true;
+    // });
+
+    // for (const item of uniqueListExtractedData) {
+    //     await insertFirehydrantWithTransactionV2({
+    //         no_pili: item.no_pili,
+    //         code_pili: item.code_pili,
+    //         isHaveMainPipe: item.isHaveMainPipe,
+    //         mainPipeSize: item.mainPipeSize,
+    //         distanceFromNearestStation: item.distanceFromNearestStation,
+    //         distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
+    //         distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
+    //         waterProduction: item.waterProduction,
+    //         staticWaterPressure: item.staticWaterPressure,
+    //         currentWaterPressure: item.currentWaterPressure,
+    //         totalPopulation: item.totalPopulation,
+    //         totalPremises: item.totalPremises,
+    //         totalBuildingOver4floors: item.totalBuildingOver4floors,
+    //         is_has_industry_risk: item.is_has_industry_risk,
+    //         is_has_housing_risk: item.is_has_housing_risk,
+    //         is_has_school_risk: item.is_has_school_risk,
+    //         otherRisks: item.otherRisks,
+    //         address: item.address,
+    //         latitude: item.latitude,
+    //         longitude: item.longitude,
+    //         postcode: item.postcode,
+    //         installation_date: item.installation_date,
+    //         external_station_id: item.external_station_id!,
+    //         state_id: item.state_id!,
+    //         district_id: item.district_id,
+    //         parliament_id: item.parliament_id,
+    //         assemblymen_id: item.assemblymen_id,
+    //         zone_id: item.zone_id,
+    //         fhtype_id: item.fhtype_id as any,
+    //         ownership_id: item.ownership_id as any,
+    //         status_id: item.status_id as any,
+    //         created_by: 249,
+    //     });
+    // }
 }
 
 
-// export async function excludeListFh(listExtractedData: itemImportFHType[]) {
-//     const { data } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/others/list-cby-fh-existing.json');
-//     const listFhNo = data.map(item => item.no_pili);
-
-//     return listExtractedData.filter(item => !listFhNo.includes(item.no_pili));
-// }
 
 
-export async function getState(stateCode: string) {
-    const stateImport = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-negeri.json');
-    const listState = stateImport.data;
+export async function checkingListNoPiliDB() {
+    const listNoPiliDB: { no_pili: string }[] = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/db-list-no-pili.csv');
+    const listNoPiliOtherData: { ["No Pili Bomba"]: string }[] = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/Fire Hydrant List (selain selangor,KL, putrajaya).csv');
 
-    return listState.find(item => item.state2_code === stateCode)?.id ?? null;
-}
+    const normalize = (s: string) => s?.trim();
+    const dbSet = new Set(listNoPiliDB.map(item => normalize(item.no_pili)));
+    const missingFromDB = listNoPiliOtherData
+        .filter(
+            (item) => !dbSet.has(normalize(item["No Pili Bomba"]))
+        );
 
-export async function getStation(stationCode: string) {
-    const { default: stationList } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-balai.json');
-    const result = stationList.find(item => item.station_code === stationCode)?.id ?? null;
-    return result;
-}
+    console.log(`Total in other data: ${listNoPiliOtherData.length}`);
+    console.log(`Total in DB: ${listNoPiliDB.length}`);
+    console.log(`Missing from DB (${missingFromDB.length}):`);
+    // console.log(missingFromDB.slice(0, 10));
 
-export async function getDistrict(secondary_id: string) {
-    const { default: districts } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-daerah.json');
-    return districts.find(item => item.secondary_id === secondary_id)?.id ?? null;
-}
 
-export async function getParliament(secondary_id: string) {
-    const { default: parliaments } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-parlimen.json');
-    return parliaments.find(item => item.parliament_code === secondary_id)?.id ?? null;
-}
+    // const listMissingStationCode = [
+    //     'PDT', 'GMH', 'PLG', 'BGK',
+    //     'AYM', 'BPS', 'BLS', 'MRA',
+    //     'SNG', 'SMJ', 'BKA', 'ISP',
+    //     'BRM', 'BLR', 'PAT', 'SUD',
+    //     'SLN', 'KNS', 'BAK', 'PSN',
+    //     'SJA', 'SMI', 'KTA', 'APN',
+    //     'KDG', 'ASP', 'WBH'
+    // ];
+    // const listDataWithStationMissing = missingFromDB.filter((item: any) =>
+    //     listMissingStationCode.some(code => item['Kod Pili (*Required)']?.includes(code))
+    // );
+    // await writeCsv("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-with-missing-station-code.csv", listDataWithStationMissing);
 
-export async function getAssemblymen(
-    state_code: string,
-    dun_code: string
-) {
-    const { default: DUNS } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-dun.json');
-    const state_id = await getState(state_code);
-
-    return DUNS
-        .filter(item => item.state_id === state_id)
-        .find(item => item.dun_code === dun_code)?.id ?? null;
-}
-
-export async function getStatus(secondary_id: string) {
-    switch (secondary_id) {
-        case "gbBdiu": {
-            return 1;
-        }
-        case "QpwEtN": {
-            return 2;
-        }
-        case "B33hni": {
-            return 3;
-        }
-    }
-}
-
-export async function getFhType(secondary_id: string) {
-    switch (secondary_id) {
-        case "QBe0on": {
-            return 1;
-        }
-        case "AubNNB": {
-            return 2;
-        }
-        case "Ofi1Gk": {
-            return 3;
-        }
-    }
-}
-
-export async function getOwnership(secondary_id: string) {
-    switch (secondary_id) {
-        case "Q64vaT": {
-            return 1;
-        }
-        case "zA7khz": {
-            return 2;
-        }
-    }
+    // await writeCsv("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-not-in-db.csv", missingFromDB);
 }
 
