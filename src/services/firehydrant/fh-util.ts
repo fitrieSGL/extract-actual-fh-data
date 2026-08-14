@@ -4,7 +4,7 @@ import { readCsv, readExcelFile, writeCsv } from "../../services/utils/csvServic
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
 import z from "zod";
-import { getAssemblymen, getDistrict, getFhType, getOwnership, getParliament, getState, getStation, getStatus } from "./util/helper-id";
+import { getAssemblymen, getDistrict, getFhType, getOwnership, getParliament, getState, getStateName, getStation, getStationStateCode, getStatus } from "./util/helper-id";
 
 const mappingFhKey = {
     no_pili: "No Pili Bomba (*Required)",
@@ -672,7 +672,8 @@ export async function checkingListNoPiliDB() {
     const listNoPiliDB: { no_pili: string }[] = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/db-list-no-pili.csv');
     const listNoPiliOtherData: { ["No Pili Bomba"]: string }[] = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/Fire Hydrant List (selain selangor,KL, putrajaya).csv');
 
-    const normalize = (s: string) => s?.trim();
+    const normalize = (s: string) => s?.trim()?.toUpperCase();
+
     const dbSet = new Set(listNoPiliDB.map(item => normalize(item.no_pili)));
     const missingFromDB = listNoPiliOtherData
         .filter(
@@ -685,20 +686,69 @@ export async function checkingListNoPiliDB() {
     // console.log(missingFromDB.slice(0, 10));
 
 
-    // const listMissingStationCode = [
-    //     'PDT', 'GMH', 'PLG', 'BGK',
-    //     'AYM', 'BPS', 'BLS', 'MRA',
-    //     'SNG', 'SMJ', 'BKA', 'ISP',
-    //     'BRM', 'BLR', 'PAT', 'SUD',
-    //     'SLN', 'KNS', 'BAK', 'PSN',
-    //     'SJA', 'SMI', 'KTA', 'APN',
-    //     'KDG', 'ASP', 'WBH'
-    // ];
-    // const listDataWithStationMissing = missingFromDB.filter((item: any) =>
-    //     listMissingStationCode.some(code => item['Kod Pili (*Required)']?.includes(code))
-    // );
-    // await writeCsv("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-with-missing-station-code.csv", listDataWithStationMissing);
-
     // await writeCsv("C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-not-in-db.csv", missingFromDB);
+
+    divideToState(missingFromDB);
+}
+
+
+async function divideToState(missingFromDB: any[]) {
+    const listUniqueCodeNegeri = [...new Set(missingFromDB.map((item: any) => item["ID Negeri"]))];
+    
+    for (const negeriCode of listUniqueCodeNegeri) {
+        const itemsForNegeri = missingFromDB.filter((item: any) => item["ID Negeri"] === negeriCode);
+
+        const negeriName = await getStateName(negeriCode);
+        await writeCsv(
+            `C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-by-negeri-to-check-station-id/${negeriName?.toLowerCase()}.csv`,
+            itemsForNegeri
+        );
+    }
+}
+
+
+
+async function checkListFhStillInKlSlPj(missingFromDB: any[]) {
+    const listStateCodeToCheck = [
+        "KL",
+        "PJ",
+        "SL"
+    ];
+
+    // Resolve the station code for every item ONCE, concurrently,
+    // before doing any filtering. This is the part `filter` can't
+    // do for us since it needs a synchronous true/false.
+    const itemsWithStation = await Promise.all(
+        missingFromDB.map(async (item) => ({
+            item,
+            stationCode: await getStationStateCode(item['Kod Pili (*Required)']),
+        }))
+    );
+
+    const listDataFromCheck = [];
+    // Now filter synchronously per state code using the already-resolved values.
+    for (const stateCode of listStateCodeToCheck) {
+        const listData = itemsWithStation
+            .filter(({ stationCode }) => stationCode === stateCode)
+            .map(({ item }) => item);
+
+        console.log(`${stateCode} (${listData.length}):`);
+        // console.log(listData);
+        listDataFromCheck.push(listData);
+    }
+
+    const normalizeListDataFromCheck = listDataFromCheck.flat();
+    // console.log(normalizeListDataFromCheck[0]);
+
+    const listUniqueCodeNegeri = [...new Set(normalizeListDataFromCheck.map((item: any) => item["ID Negeri"]))];
+    for (const negeriCode of listUniqueCodeNegeri) {
+        const itemsForNegeri = normalizeListDataFromCheck.filter((item: any) => item["ID Negeri"] === negeriCode);
+
+        const negeriName = await getStateName(negeriCode);
+        await writeCsv(
+            `C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-with-wrong-station-code/${negeriName?.toLowerCase()}.csv`,
+            itemsForNegeri
+        );
+    }
 }
 

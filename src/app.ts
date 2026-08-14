@@ -62,5 +62,5 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 // importTemanPiliToDB();
 // importFHExcelToDB();
-importFHToDB();
-// checkingListNoPiliDB()
+// importFHToDB();
+checkingListNoPiliDB()

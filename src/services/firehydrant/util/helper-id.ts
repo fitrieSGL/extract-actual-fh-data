@@ -9,9 +9,20 @@ export async function getState(stateCode: string) {
     return listState.find(item => item.state2_code === stateCode)?.id ?? null;
 }
 
+export async function getStateName(stateCode: string) {
+    const listState = statesData.data;
+    return listState.find(item => item.state2_code === stateCode)?.name ?? null;
+}
+
 export async function getStation(stationCode: string) {
     const result = stationsData.find(item => item.station_code === stationCode)?.id ?? null;
     return result;
+}
+
+export async function getStationStateCode(stationCode: string) {
+    const state_id = stationsData.find(item => item.station_code === stationCode)?.state_id ?? null;
+    const stateCode = statesData.data.find(item => item.id === state_id)?.state2_code
+    return stateCode;
 }
 
 export async function getDistrict(secondary_id: string) {

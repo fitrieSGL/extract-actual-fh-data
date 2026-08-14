@@ -1,8 +1,9 @@
 import { parse } from 'csv-parse';
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
-import { createReadStream } from 'fs';
+import { createReadStream, createWriteStream } from 'fs';
 import path from "path";
+import { stringify } from 'csv-stringify';
 
 
 
@@ -104,31 +105,62 @@ export async function readCsv(path: string): Promise<any[]> {
 }
 
 
-export async function writeCsv(
-    path: string,
-    data: any[]
-): Promise<void> {
+// export async function writeCsv(
+//     path: string,
+//     data: any[]
+// ): Promise<void> {
+//     if (!data || data.length === 0) {
+//         throw new Error('No data to write to CSV');
+//     }
+
+//     const workbook = new ExcelJS.Workbook();
+//     const worksheet = workbook.addWorksheet('Sheet1');
+
+//     // Get headers from first object keys
+//     const headers = Object.keys(data[0]);
+
+//     // Add header row
+//     worksheet.addRow(headers);
+
+//     // Add data rows
+//     data.forEach((item) => {
+//         const row = headers.map(header => item[header]);
+//         worksheet.addRow(row);
+//     });
+
+//     // Write to file
+//     await workbook.csv.writeFile(path);
+// }
+
+export async function writeCsv(path: string, data: any[]): Promise<void> {
     if (!data || data.length === 0) {
         throw new Error('No data to write to CSV');
     }
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Sheet1');
-
-    // Get headers from first object keys
     const headers = Object.keys(data[0]);
 
-    // Add header row
-    worksheet.addRow(headers);
+    return new Promise((resolve, reject) => {
+        const writeStream = createWriteStream(path);
+        const stringifier = stringify({
+            header: true,
+            columns: headers,
+        });
 
-    // Add data rows
-    data.forEach((item) => {
-        const row = headers.map(header => item[header]);
-        worksheet.addRow(row);
+        stringifier.pipe(writeStream);
+
+        writeStream.on('finish', resolve);
+        writeStream.on('error', reject);
+        stringifier.on('error', reject);
+
+        for (const item of data) {
+            // backpressure-safe enough for this scale; for extremely large
+            // datasets you could await drain events, but this will already
+            // be dramatically lighter than the ExcelJS version
+            stringifier.write(item);
+        }
+
+        stringifier.end();
     });
-
-    // Write to file
-    await workbook.csv.writeFile(path);
 }
 
 export async function csvToJSONFile(
