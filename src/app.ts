@@ -6,7 +6,7 @@ import { generateTemplateImportFireHydrantCSV, createFHImportLookup, importFHToD
 import { importFHExcelToDB } from './services/firehydrant/import-fh-excel';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 import { formatSQLFirehydrantTemanPili, formatSQLDeleteFireHydrant, formatSQLFireOnWaterToUpdate, formatSQLFireOutsideMalaysiaToUpdate, formatSQLOpenWaterSourceOutsideMalaysiaToUpdate, formatSQLFhOnRiverToUpdate } from './services/utils/format-sql';
-import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
+import { generateTemplateImportTemanPiliCSV, importTemanPiliToDB } from './services/temanpili/temanpili-util';
 
 
 //* Run here
@@ -60,7 +60,7 @@ import { importTemanPiliToDB } from './services/temanpili/temanpili-util';
 // generateTemplateImportTemanPiliCSV()
 
 
-// importTemanPiliToDB();
+importTemanPiliToDB();
 // importFHExcelToDB();
 // importFHToDB();
-checkingListNoPiliDB()
+// checkingListNoPiliDB()

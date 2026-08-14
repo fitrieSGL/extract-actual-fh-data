@@ -3,6 +3,7 @@ import { z } from "zod";
 import dayjs from "dayjs";
 // import { insertTemanPiliWithTransaction } from "db/temanpili/db";
 import { insertTemanPiliWithTransaction } from "../../db/temanpili/db";
+import { capitalizeWords, getState, getStation } from "./util/helper-id";
 
 
 const mappingTemanPiliKey = {
@@ -47,21 +48,27 @@ const itemImportTemanPiliSchema = z.object({
     office_postcode: z.string().nullish(),
     office_state_id: z.string().nullish(),
     office_district_id: z.string().nullish(),
-    gender: z.enum(['Lelaki', 'Perempuan', 'Tidak Diketahui']).transform((val) => {
-        const map: Record<string, string> = {
-            'Lelaki': 'a17c4e19-35e5-4ca1-9d4c-7513bca1af26',
-            'Perempuan': '836378d9-8a6e-4642-9e10-92c73ae8260e',
-            'Tidak Diketahui': 'ff6f1c90-ce81-4754-8458-14e2efe031b7',
-        };
-        return map[val];
-    }),
-    status: z.enum(['Aktif', 'Tidak Aktif']).transform((val) => {
-        const map: Record<string, string> = {
-            'Aktif': '484701f0-4d73-4a08-a11d-54ffcee87f75',
-            'Tidak Aktif': '4734bc60-7339-4d18-8326-25d78d389a4d',
-        };
-        return map[val];
-    }),
+    gender: z.string()
+        .transform((val) => val.trim().toLowerCase())
+        .pipe(z.enum(['lelaki', 'perempuan', 'tidak diketahui']))
+        .transform((val) => {
+            const map: Record<string, string> = {
+                'lelaki': 'a17c4e19-35e5-4ca1-9d4c-7513bca1af26',
+                'perempuan': '836378d9-8a6e-4642-9e10-92c73ae8260e',
+                'tidak diketahui': 'ff6f1c90-ce81-4754-8458-14e2efe031b7',
+            };
+            return map[val];
+        }),
+    status: z.string()
+        .transform((val) => val.trim().toLowerCase())
+        .pipe(z.enum(['aktif', 'tidak aktif']))
+        .transform((val) => {
+            const map: Record<string, string> = {
+                'aktif': '484701f0-4d73-4a08-a11d-54ffcee87f75',
+                'tidak aktif': '4734bc60-7339-4d18-8326-25d78d389a4d',
+            };
+            return map[val];
+        }),
     created_at: z.string().nullish().transform(val => {
         if (!val) return null;
 
@@ -112,7 +119,8 @@ export async function generateTemplateImportTemanPiliCSV() {
 
 
 export async function importTemanPiliToDB() {
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/teman-pili-import- BBP CBY.csv');
+    // const listData = await readCsv('C:/Users/Fitrie/Downloads/teman-pili-import- BBP CBY.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/template-teman-pili-import.Kuala.Selangor.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingTemanPiliKey).map(([key, value]) => [value, key])
     );
@@ -127,6 +135,7 @@ export async function importTemanPiliToDB() {
         );
     });
 
+
     const validatedData = validateListItemImportTemanPiliSchema(remappedData);
     const listExtractedData = await Promise.all(
         validatedData.map(async (item) => {
@@ -139,7 +148,7 @@ export async function importTemanPiliToDB() {
     );
 
     const [listUnique, listDuplicate] = getDuplicateTemanPili(listExtractedData as any);
-    // console.log("listUnique: ", listUnique);
+    console.log("listUnique: ", listUnique);
     // console.log("listDuplicate: ", listDuplicate);
     // console.log(listExtractedData);
 
@@ -170,9 +179,9 @@ export async function importTemanPiliToDB() {
 export function getDuplicateTemanPili(
     listExtractedData: TemanPiliItem[]
 ): [
-    TemanPiliItem[], 
-    TemanPiliItem[]
-] {
+        TemanPiliItem[],
+        TemanPiliItem[]
+    ] {
     const seenForUnique = new Set<string>();
     const listUnique: TemanPiliItem[] = [];
 
@@ -198,15 +207,5 @@ export function getDuplicateTemanPili(
     return [listUnique, listDuplicate];
 }
 
-export async function getState(stateCode: string) {
-    const stateImport = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-negeri.json');
-    const listState = stateImport.data;
 
-    return listState.find(item => item.state2_code === stateCode)?.id ?? null;
-}
-
-export async function getStation(stationCode: string) {
-    const { default: stationList } = await import('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-balai.json');
-    return stationList.find(item => item.station_code === stationCode)?.id ?? null;
-}
 
