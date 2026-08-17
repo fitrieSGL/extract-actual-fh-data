@@ -3,7 +3,8 @@ import { z } from "zod";
 import dayjs from "dayjs";
 // import { insertTemanPiliWithTransaction } from "db/temanpili/db";
 import { insertTemanPiliWithTransaction } from "../../db/temanpili/db";
-import { capitalizeWords, getState, getStation } from "./util/helper-id";
+import { capitalizeWords, correctTheDate, getState, getStation } from "./util/helper-id";
+import fs from "fs/promises";
 
 
 const mappingTemanPiliKey = {
@@ -133,7 +134,15 @@ export async function importTemanPiliToDB() {
                 return [mappedKey, value];
             })
         );
-    });
+    })
+        .map(item => {
+            return {
+                ...item,
+                created_at: correctTheDate(item.created_at as any)
+            }
+        });
+
+    // console.log(remappedData[0]);
 
 
     const validatedData = validateListItemImportTemanPiliSchema(remappedData);
@@ -148,11 +157,12 @@ export async function importTemanPiliToDB() {
     );
 
     const [listUnique, listDuplicate] = getDuplicateTemanPili(listExtractedData as any);
-    console.log("listUnique: ", listUnique);
-    // console.log("listDuplicate: ", listDuplicate);
-    // console.log(listExtractedData);
+    const [listUniqueTwo, listDuplicateTwo] = await getDuplicateTemanPiliDbAndNewData("C:/Users/Fitrie/Desktop/etc-FHIS/exported-dbeaver/list-teman-pili-ksg.csv", listUnique as any);
+    // console.log("listUnique: ", listUnique.length);
+    // console.log("listDuplicate: ", listDuplicate.length);
+    // console.log(listExtractedData[0]);
 
-    // for (const item of listUnique) {
+    // for (const item of listUniqueTwo) {
     //     await insertTemanPiliWithTransaction({
     //         station_id: item.station_id,
     //         no_pili: item.no_pili,
@@ -208,4 +218,51 @@ export function getDuplicateTemanPili(
 }
 
 
+async function getDuplicateTemanPiliDbAndNewData(
+    pathCsvDbExistingData: string,
+    listNewData: TemanPiliItem[]
+) {
+    const listTemanPiliData: TemanPiliItem[] = await readCsv(pathCsvDbExistingData);
+    const listDuplicate = listNewData.filter(item => {
+        const isExist = listTemanPiliData.find(itemInside => itemInside.name === item.name);
+        return isExist;
+    });
 
+    const listUnique = listNewData.filter(item => {
+        const isExist = listTemanPiliData.find(itemInside => itemInside.name === item.name);
+        return !isExist;
+    });
+
+    console.log("listDuplicate: ", listDuplicate.length);
+    console.log("listUnique: ", listUnique.length);
+
+    // await writeCsv("C:/Users/Fitrie/Downloads/list-teman-pili-ksg-duplicate.csv", listDuplicate);
+    // await writeCsv("C:/Users/Fitrie/Downloads/list-teman-pili-ksg-unique.csv", listUnique);
+
+    return [listUnique, listDuplicate]
+}
+
+
+
+export async function formatSQLFirehydrantTemanPili() {
+    const rawData = await import("C:/Users/Fitrie/Desktop/etc-FHIS/exported-dbeaver/list-teman-pili-for-import-ksg.json");
+    const listData = rawData.data;
+
+    const listFormattedData = listData.map((item, index) => {
+        const isLast = index === listData.length - 1;
+        return `('${item.membership_no}', '${item.no_pili}')${isLast ? '' : ','}`;
+    });
+
+    const sql = `
+        INSERT INTO fire_hydrant_teman_pili (temanpili_id, firehydrant_id)
+        SELECT tpb.id, fh.id
+        FROM (VALUES
+            ${listFormattedData.join('\n        ')}
+        ) AS data(membership_no, no_pili)
+        JOIN teman_pili_bomba tpb ON tpb.membership_no = data.membership_no
+        JOIN fire_hydrant fh ON fh.no_pili = data.no_pili;
+    `;
+
+
+    await fs.writeFile('C:/Users/Fitrie/Downloads/test.txt', sql, 'utf-8');
+}
