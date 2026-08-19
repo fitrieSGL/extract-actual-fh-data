@@ -4,6 +4,23 @@ import districtsData from 'C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/
 import parliamentsData from 'C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-parlimen.json';
 import dunsData from 'C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/DB/json/senarai-dun.json';
 
+//----------------------------------Temp function----------------------------------
+export async function checkIsStationCodeValid(stationCode: string): Promise<boolean | undefined> {
+    const listStateIdToCheck = [
+        "09a53d0c-6993-4cfc-a9f0-3da42395ef59", // PJ
+        "b74645e5-3ad2-4dd9-ba72-3b7eb8f16643", // SL
+        "55c38deb-aae3-44c5-bfac-0bb919effec4" // KL
+    ];
+
+    const item = stationsData.find(item => item.station_code === stationCode) ?? null;
+    if (item) {
+        return listStateIdToCheck.includes(item.state_id);
+    }
+
+    return undefined;
+}
+//----------------------------------Temp function----------------------------------
+
 export async function getState(stateCode: string) {
     const listState = statesData.data;
     return listState.find(item => item.state2_code === stateCode)?.id ?? null;

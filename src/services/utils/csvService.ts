@@ -227,3 +227,77 @@ export async function readExcelFile(
 
     return rows;
 }
+
+
+export async function writeExcelFile(
+    filePathExport: string,
+    sheetName: string,
+    data: Record<string, unknown>[],
+    headers?: string[]
+): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(sheetName);
+
+    const columnHeaders = headers ?? (data.length > 0 ? Object.keys(data[0]) : []);
+
+    worksheet.addRow(columnHeaders);
+
+    for (const rowObj of data) {
+        const rowValues = columnHeaders.map((header) => rowObj[header] ?? null);
+        worksheet.addRow(rowValues);
+    }
+
+    await workbook.xlsx.writeFile(filePathExport);
+}
+
+function applyRowColor(row: ExcelJS.Row, argbColor: string): void {
+    row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: argbColor },
+        };
+    });
+}
+
+export interface SheetConfig {
+    sheetName: string;
+    data: Record<string, unknown>[];
+    headers?: string[];
+    rowColorFn?: (rowObj: Record<string, unknown>) => string | undefined | Promise<string | undefined>;
+}
+
+export async function writeExcelFileAndEdit(
+    filePathExport: string,
+    sheets: SheetConfig[]
+): Promise<void> {
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+        filename: filePathExport,
+        useStyles: true,       // needed so row fills actually get applied
+        useSharedStrings: true, // smaller file, less memory for repeated strings
+    });
+
+    for (const { sheetName, data, headers, rowColorFn } of sheets) {
+        console.log(`Processing sheet ${sheetName}`);
+        const worksheet = workbook.addWorksheet(sheetName);
+        const columnHeaders = headers ?? (data.length > 0 ? Object.keys(data[0]) : []);
+
+        worksheet.addRow(columnHeaders).commit();
+
+        for (const rowObj of data) {
+            const rowValues = columnHeaders.map((header) => rowObj[header] ?? null);
+            const row = worksheet.addRow(rowValues);
+
+            const color = await rowColorFn?.(rowObj);
+            if (color) {
+                applyRowColor(row, color);
+            }
+
+            row.commit(); // flush this row, free it from memory
+        }
+
+        worksheet.commit(); // finalize this sheet
+    }
+
+    await workbook.commit(); // finalize the file
+}

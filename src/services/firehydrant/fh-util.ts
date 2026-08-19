@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import { insertFirehydrantWithTransaction, insertFirehydrantWithTransactionV2 } from "../../db/firehydrant/db";
-import { readCsv, readExcelFile, writeCsv } from "../../services/utils/csvService";
+import { readCsv, readExcelFile, SheetConfig, writeCsv, writeExcelFile, writeExcelFileAndEdit } from "../../services/utils/csvService";
 import * as ExcelJS from 'exceljs';
 import fs from "fs/promises";
 import z from "zod";
-import { getAssemblymen, getDistrict, getFhType, getOwnership, getParliament, getState, getStateName, getStation, getStationStateCode, getStatus } from "./util/helper-id";
+import { checkIsStationCodeValid, getAssemblymen, getDistrict, getFhType, getOwnership, getParliament, getState, getStateName, getStation, getStationStateCode, getStatus } from "./util/helper-id";
 
 const mappingFhKey = {
     no_pili: "No Pili Bomba (*Required)",
@@ -694,7 +694,7 @@ export async function checkingListNoPiliDB() {
 
 async function divideToState(missingFromDB: any[]) {
     const listUniqueCodeNegeri = [...new Set(missingFromDB.map((item: any) => item["ID Negeri"]))];
-    
+
     for (const negeriCode of listUniqueCodeNegeri) {
         const itemsForNegeri = missingFromDB.filter((item: any) => item["ID Negeri"] === negeriCode);
 
@@ -750,5 +750,60 @@ async function checkListFhStillInKlSlPj(missingFromDB: any[]) {
             itemsForNegeri
         );
     }
+}
+
+
+// Temp function
+export async function markListFhAndExportExcel() {
+    const listState = [
+        "johor",
+        "kedah",
+        "kelantan",
+        "melaka",
+        "negeri sembilan",
+        "pahang",
+        "pulau pinang",
+        "perak",
+        "perlis",
+        "sabah",
+        "sarawak",
+        "terengganu",
+        "wilayah persekutuan labuan",
+    ];
+
+    const pathToExport = `C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/marked/list-pili-by-negeri-to-check-station-id.xlsx`;
+    const listDataFromCsv: { name: string, data: any[] }[] = [];
+    for (let i of listState) {
+        const path = `C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-by-negeri-to-check-station-id/${i}.csv`;
+        const listData = await readCsv(path);
+
+        listDataFromCsv.push({
+            name: i,
+            data: listData,
+        });
+    }
+
+    const listDataToWriteExcel: SheetConfig[] = listDataFromCsv.map(item => {
+        return {
+            sheetName: item.name,
+            data: item.data,
+            headers: undefined,
+            rowColorFn: async (rowObj) => {
+                const isStationCodeValid = await checkIsStationCodeValid(rowObj['Kod Pili (*Required)'] as any);
+                if (isStationCodeValid) {
+                    return 'FF000D';
+                }
+                if (!rowObj["Alamat"]) {
+                    return 'FFFFFF00';
+                }
+                return undefined; // no color
+            }
+        }
+    })
+
+    await writeExcelFileAndEdit(
+        pathToExport,
+        listDataToWriteExcel
+    );
 }
 
