@@ -94,3 +94,96 @@ export async function insertOwsWithTransaction(payload: FHISOwsType) {
         client.release();
     }
 }
+
+
+
+
+export async function insertOwsWithTransactionV2({
+    parliament_id,
+    state_id,
+    dun_id,
+    district_id,
+    latitude,
+    longitude,
+    address,
+    station_id,
+    reference_no,
+    created_at,
+    status_id,
+    type_id
+}: {
+    parliament_id: string | null,
+    state_id: string | null,
+    dun_id: string | null,
+    district_id: string | null,
+    latitude: number,
+    longitude: number,
+    address: string | null,
+    station_id: string | null,
+    reference_no: string,
+    created_at: string | null,
+    status_id: number,
+    type_id: string | null,
+}) {
+
+    // Get a client from the pool
+    const client = await pool.connect();
+
+    try {
+        // Begin transaction
+        await client.query('BEGIN');
+
+        const insertQuery = `
+            INSERT INTO open_water (
+                parliament_id,
+                state_id,
+                dun_id,
+                district_id,
+                latitude,
+                longitude,
+                address,
+                station_id,
+                reference_no,
+                created_at,
+                created_by,
+                status_id,
+                type_id
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10::timestamptz, NOW()), $11, $12, $13
+            )
+            RETURNING *
+        `;
+
+        const insertResult = await client.query(insertQuery, [
+            parliament_id,
+            state_id,
+            dun_id,
+            district_id,
+            latitude,
+            longitude,
+            address,
+            station_id,
+            reference_no,
+            created_at,
+            249,
+            status_id,
+            type_id,
+        ]);
+
+        // Commit transaction
+        await client.query('COMMIT');
+
+        console.log('OWS inserted:', insertResult.rows[0]);
+        return insertResult.rows[0];
+
+    } catch (error) {
+        // Rollback transaction on error
+        await client.query('ROLLBACK');
+        console.error('Error executing query:', error);
+        throw error;
+    } finally {
+        // Release the client back to the pool
+        client.release();
+    }
+}

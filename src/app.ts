@@ -8,6 +8,7 @@ import { importFHExcelToDB } from './services/firehydrant/import-fh-excel';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 import { formatSQLDeleteFireHydrant, formatSQLFireOnWaterToUpdate, formatSQLFireOutsideMalaysiaToUpdate, formatSQLOpenWaterSourceOutsideMalaysiaToUpdate, formatSQLFhOnRiverToUpdate } from './services/utils/format-sql';
 import { generateTemplateImportTemanPiliCSV, importTemanPiliToDB, formatSQLFirehydrantTemanPili } from './services/temanpili/temanpili-util';
+import { importOws } from './services/ows/import-ows-test';
 
 
 //* Run here
@@ -72,3 +73,5 @@ import { generateTemplateImportTemanPiliCSV, importTemanPiliToDB, formatSQLFireh
 
 // importFHToDBTwo();
 // exportFhNotCorrectCsv("C:/Users/Fitrie/Downloads/FROM BOMBA-selected/list-data-without-latlng-and-address/BBP PENDANG.csv");
+
+importOws();
