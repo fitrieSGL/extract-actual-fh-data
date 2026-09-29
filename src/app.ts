@@ -2,7 +2,8 @@ import { insertDataOwsCSVToDB, readCsvOwsAndConvertToFhisDBOwsCsv } from './serv
 import { readCSVAndInsertToDb, readCSVAndInsertToDbTwo } from './services/firehydrant/serviceDb';
 import { updateCSVListFhOnWater, csvToJSONFile } from './services/utils/csvService';
 // import { readCSVSPPBTemanPili } from './services/temanpili/csvService';
-import { generateTemplateImportFireHydrantCSV, createFHImportLookup, importFHToDB, checkingListNoPiliDB, markListFhAndExportExcel } from './services/firehydrant/fh-util';
+import { generateTemplateImportFireHydrantCSV, createFHImportLookup, importFHToDB, checkingListNoPiliDB, markListFhAndExportExcel } from './services/firehydrant/import-fh-from-template';
+import { importFHToDBTwo, exportFhNotCorrectCsv } from './services/firehydrant/import-fh-test';
 import { importFHExcelToDB } from './services/firehydrant/import-fh-excel';
 import { createOWSImportLookup, generateTemplateImportOwsCSV } from './services/ows/ows-util';
 import { formatSQLDeleteFireHydrant, formatSQLFireOnWaterToUpdate, formatSQLFireOutsideMalaysiaToUpdate, formatSQLOpenWaterSourceOutsideMalaysiaToUpdate, formatSQLFhOnRiverToUpdate } from './services/utils/format-sql';
@@ -68,3 +69,6 @@ import { generateTemplateImportTemanPiliCSV, importTemanPiliToDB, formatSQLFireh
 
 
 // markListFhAndExportExcel();
+
+// importFHToDBTwo();
+// exportFhNotCorrectCsv("C:/Users/Fitrie/Downloads/FROM BOMBA-selected/list-data-without-latlng-and-address/BBP PENDANG.csv");
