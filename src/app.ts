@@ -64,7 +64,7 @@ import { importOws } from './services/ows/import-ows-test';
 
 // importTemanPiliToDB();
 // importFHExcelToDB();
-// importFHToDB();
+importFHToDB();
 // checkingListNoPiliDB()
 
 
@@ -74,4 +74,4 @@ import { importOws } from './services/ows/import-ows-test';
 // importFHToDBTwo();
 // exportFhNotCorrectCsv("C:/Users/Fitrie/Downloads/FROM BOMBA-selected/list-data-without-latlng-and-address/BBP PENDANG.csv");
 
-importOws();
+// importOws();

@@ -51,6 +51,11 @@ const cleanedLatLngProcess = z.preprocess((val) => {
     return val;
 }, z.number().nullish());
 
+const handleBooleanRiskOptionZod = z
+    .enum(['YA', 'TIDAK'])
+    .nullish()
+    .transform(item => item === 'YA');
+
 const itemImportFHSchema = z.object({
     no_pili: z.string(),
     code_pili: z.string(),
@@ -65,10 +70,10 @@ const itemImportFHSchema = z.object({
     totalPopulation: z.number().nullish(),
     totalPremises: z.number().nullish(),
     totalBuildingOver4floors: z.number().nullish().transform(val => val ?? null),
-    is_has_industry_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
-    is_has_housing_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
-    is_has_school_risk: z.enum(['YA', 'TIDAK']).transform(val => val == null ? val : val === 'YA'),
-    otherRisks: z.string(),
+    is_has_industry_risk: handleBooleanRiskOptionZod,
+    is_has_housing_risk: handleBooleanRiskOptionZod,
+    is_has_school_risk: handleBooleanRiskOptionZod,
+    otherRisks: z.string().nullish().transform(v => v ?? "Tiada"),
     address: z.string().nullish().transform(val => val ?? "-"),
     latitude: cleanedLatLngProcess,
     longitude: cleanedLatLngProcess,
@@ -583,8 +588,8 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 
 
 export async function importFHToDB() {
-    // const listData = await readCsv('C:/Users/Fitrie/Downloads/fire-hydrant-import-BBP CBY.csv');
-    const listData = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-not-in-db.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/BBP KIJAL.csv');
+    // const listData = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-not-in-db.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingFhKey).map(([key, value]) => [value, key])
     );
@@ -627,42 +632,43 @@ export async function importFHToDB() {
             return true;
         });
 
-    for (const item of uniqueListExtractedData) {
-        await insertFirehydrantWithTransactionV2({
-            no_pili: item.no_pili,
-            code_pili: item.code_pili,
-            isHaveMainPipe: item.isHaveMainPipe,
-            mainPipeSize: item.mainPipeSize,
-            distanceFromNearestStation: item.distanceFromNearestStation,
-            distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
-            distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
-            waterProduction: item.waterProduction,
-            staticWaterPressure: item.staticWaterPressure,
-            currentWaterPressure: item.currentWaterPressure,
-            totalPopulation: item.totalPopulation,
-            totalPremises: item.totalPremises,
-            totalBuildingOver4floors: item.totalBuildingOver4floors,
-            is_has_industry_risk: item.is_has_industry_risk,
-            is_has_housing_risk: item.is_has_housing_risk,
-            is_has_school_risk: item.is_has_school_risk,
-            otherRisks: item.otherRisks,
-            address: item.address,
-            latitude: item.latitude,
-            longitude: item.longitude,
-            postcode: item.postcode,
-            installation_date: item.installation_date,
-            external_station_id: item.external_station_id!,
-            state_id: item.state_id!,
-            district_id: item.district_id,
-            parliament_id: item.parliament_id,
-            assemblymen_id: item.assemblymen_id,
-            zone_id: item.zone_id,
-            fhtype_id: item.fhtype_id as any,
-            ownership_id: item.ownership_id as any,
-            status_id: item.status_id as any,
-            created_by: 249,
-        });
-    }
+    // console.log(uniqueListExtractedData);
+
+    // for (const item of uniqueListExtractedData) {
+    //     await insertFirehydrantWithTransactionV2({
+    //         no_pili: item.no_pili,
+    //         code_pili: item.code_pili,
+    //         isHaveMainPipe: item.isHaveMainPipe,
+    //         mainPipeSize: item.mainPipeSize,
+    //         distanceFromNearestStation: item.distanceFromNearestStation,
+    //         distanceFromNearestFireHydrant: item.distanceFromNearestFireHydrant,
+    //         distanceFromOpenWaterSources: item.distanceFromOpenWaterSources,
+    //         waterProduction: item.waterProduction,
+    //         staticWaterPressure: item.staticWaterPressure,
+    //         currentWaterPressure: item.currentWaterPressure,
+    //         totalPopulation: item.totalPopulation,
+    //         totalPremises: item.totalPremises,
+    //         totalBuildingOver4floors: item.totalBuildingOver4floors,
+    //         is_has_industry_risk: item.is_has_industry_risk,
+    //         is_has_housing_risk: item.is_has_housing_risk,
+    //         is_has_school_risk: item.is_has_school_risk,
+    //         otherRisks: item.otherRisks,
+    //         address: item.address,
+    //         latitude: item.latitude,
+    //         longitude: item.longitude,
+    //         postcode: item.postcode,
+    //         installation_date: item.installation_date,
+    //         external_station_id: item.external_station_id!,
+    //         state_id: item.state_id!,
+    //         district_id: item.district_id,
+    //         parliament_id: item.parliament_id,
+    //         assemblymen_id: item.assemblymen_id,
+    //         zone_id: item.zone_id,
+    //         fhtype_id: item.fhtype_id as any,
+    //         ownership_id: item.ownership_id as any,
+    //         status_id: item.status_id as any,
+    //     });
+    // }
 }
 
 

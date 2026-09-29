@@ -283,7 +283,6 @@ export async function insertFirehydrantWithTransactionV2(payload: {
     fhtype_id: string | null | undefined,
     ownership_id: string | null | undefined,
     status_id: string | null | undefined,
-    created_by: number,
 }) {
     const {
         no_pili,
@@ -317,7 +316,6 @@ export async function insertFirehydrantWithTransactionV2(payload: {
         fhtype_id,
         ownership_id,
         status_id,
-        created_by,
     } = payload;
 
     const client = await pool.connect();
@@ -403,7 +401,7 @@ export async function insertFirehydrantWithTransactionV2(payload: {
             fhtype_id ?? null,
             ownership_id ?? null,
             status_id ?? null,
-            created_by,
+            249,
             "Add",
         ]);
 
