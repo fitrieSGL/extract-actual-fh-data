@@ -588,7 +588,7 @@ async function sheetFhStatus(workbook: ExcelJS.Workbook) {
 
 
 export async function importFHToDB() {
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/BBP KIJAL.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/BBP AMPANGAN.csv');
     // const listData = await readCsv('C:/Users/Fitrie/Desktop/etc-FHIS/actual-data-fhis/checking/list-pili-not-in-db.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingFhKey).map(([key, value]) => [value, key])

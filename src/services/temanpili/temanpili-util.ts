@@ -3,7 +3,7 @@ import { z } from "zod";
 import dayjs from "dayjs";
 // import { insertTemanPiliWithTransaction } from "db/temanpili/db";
 import { insertTemanPiliWithTransaction } from "../../db/temanpili/db";
-import { capitalizeWords, correctTheDate, getState, getStation } from "./util/helper-id";
+import { capitalizeWords, correctTheDate, toTimestamptz, getState, getStation } from "./util/helper-id";
 import fs from "fs/promises";
 
 
@@ -70,15 +70,25 @@ const itemImportTemanPiliSchema = z.object({
             };
             return map[val];
         }),
-    created_at: z.string().nullish().transform(val => {
-        if (!val) return null;
+    // created_at: z.string().nullish().transform(val => {
+    //     if (!val) return null;
 
-        const withTime = dayjs(val, 'D/M/YYYY H:mm');
-        if (withTime.isValid()) return withTime.format('YYYY-MM-DD HH:mm:ss');
+    //     const withTime = dayjs(val, 'D/M/YYYY H:mm');
+    //     if (withTime.isValid()) return withTime.format('YYYY-MM-DD HH:mm:ss');
 
-        const dateOnly = dayjs(val, 'D/M/YYYY');
-        return dateOnly.isValid() ? dateOnly.format('YYYY-MM-DD 00:00:00') : null;
-    }),
+    //     const dateOnly = dayjs(val, 'D/M/YYYY');
+    //     return dateOnly.isValid() ? dateOnly.format('YYYY-MM-DD 00:00:00') : null;
+    // }),
+    created_at: z.string()
+        .nullish()
+        .transform((val) => {
+            console.log("Val: ", val);
+            if(val){
+                return toTimestamptz(val); 
+            }
+
+            return null;
+        }),
 });
 const listItemImportTemanPiliSchema = z.array(itemImportTemanPiliSchema);
 
@@ -121,7 +131,7 @@ export async function generateTemplateImportTemanPiliCSV() {
 
 export async function importTemanPiliToDB() {
     // const listData = await readCsv('C:/Users/Fitrie/Downloads/teman-pili-import- BBP CBY.csv');
-    const listData = await readCsv('C:/Users/Fitrie/Downloads/template-teman-pili-import.Kuala.Selangor.csv');
+    const listData = await readCsv('C:/Users/Fitrie/Downloads/template-teman-pili-import 20242025.csv');
     const reversedMapping = Object.fromEntries(
         Object.entries(mappingTemanPiliKey).map(([key, value]) => [value, key])
     );
@@ -138,7 +148,7 @@ export async function importTemanPiliToDB() {
         .map(item => {
             return {
                 ...item,
-                created_at: correctTheDate(item.created_at as any)
+                // created_at: toTimestamptz(item.created_at as any)
             }
         });
 
@@ -157,33 +167,33 @@ export async function importTemanPiliToDB() {
     );
 
     const [listUnique, listDuplicate] = getDuplicateTemanPili(listExtractedData as any);
-    const [listUniqueTwo, listDuplicateTwo] = await getDuplicateTemanPiliDbAndNewData("C:/Users/Fitrie/Desktop/etc-FHIS/exported-dbeaver/list-teman-pili-ksg.csv", listUnique as any);
-    // console.log("listUnique: ", listUnique.length);
-    // console.log("listDuplicate: ", listDuplicate.length);
-    // console.log(listExtractedData[0]);
+    // const [listUniqueTwo, listDuplicateTwo] = await getDuplicateTemanPiliDbAndNewData("C:/Users/Fitrie/Desktop/etc-FHIS/exported-dbeaver/list-teman-pili-ksg.csv", listUnique as any);
+    console.log("listUnique: ", listUnique.length);
+    console.log("listDuplicate: ", listDuplicate.length);
+    // console.log(listExtractedData[10]);
 
-    // for (const item of listUniqueTwo) {
-    //     await insertTemanPiliWithTransaction({
-    //         station_id: item.station_id,
-    //         no_pili: item.no_pili,
-    //         name: item.name,
-    //         no_ic: item.no_ic as any,
-    //         email: item.email as any,
-    //         phone_no: item.phone_no as any,
-    //         address: item.address,
-    //         postcode: item.postcode as any,
-    //         state_id: item.state_id as string,
-    //         district_id: item.district_id as any,
-    //         occupation: item.occupation as any,
-    //         office_address: item.office_address as any,
-    //         office_postcode: item.office_postcode as any,
-    //         office_state_id: item.office_state_id as any,
-    //         office_district_id: item.office_district_id as any,
-    //         gender: item.gender,
-    //         status: item.status,
-    //         created_at: item.created_at as any,
-    //     });
-    // }
+    for (const item of listExtractedData) {
+        await insertTemanPiliWithTransaction({
+            station_id: item.station_id,
+            no_pili: item.no_pili,
+            name: item.name,
+            no_ic: item.no_ic as any,
+            email: item.email as any,
+            phone_no: item.phone_no as any,
+            address: item.address,
+            postcode: item.postcode as any,
+            state_id: item.state_id as string,
+            district_id: item.district_id as any,
+            occupation: item.occupation as any,
+            office_address: item.office_address as any,
+            office_postcode: item.office_postcode as any,
+            office_state_id: item.office_state_id as any,
+            office_district_id: item.office_district_id as any,
+            gender: item.gender,
+            status: item.status,
+            created_at: item.created_at as any,
+        });
+    }
 }
 
 export function getDuplicateTemanPili(

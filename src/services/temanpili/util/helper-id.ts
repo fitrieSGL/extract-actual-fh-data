@@ -40,3 +40,18 @@ export function correctTheDate(rawDate: string | number) {
 
     return `${day}/${month}/${year}`
 }
+
+export function toTimestamptz(input: string, offset: string = "+08:00"): string {
+    const m = input
+        .trim()
+        .match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (!m) throw new Error(`Unrecognised format: ${input}`);
+
+    const [, dd, mm, yyyy, hh, min, ss = "00"] = m;
+
+    const pad = (n: string | number): string => String(n).padStart(2, "0");
+    return `${yyyy}-${pad(mm)}-${pad(dd)}T${pad(hh)}:${min}:${ss}${offset}`;
+}
+
+// toTimestamptz("26/11/2025 12:15"); // "2025-11-26T12:15:00+08:00"
+// toTimestamptz("26/11/2025 13:15"); // "2025-11-26T13:15:00+08:00"

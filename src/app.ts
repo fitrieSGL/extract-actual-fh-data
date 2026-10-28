@@ -62,9 +62,9 @@ import { importOws } from './services/ows/import-ows-test';
 // generateTemplateImportTemanPiliCSV()
 
 
-// importTemanPiliToDB();
+importTemanPiliToDB();
 // importFHExcelToDB();
-importFHToDB();
+// importFHToDB();
 // checkingListNoPiliDB()
 
 
